@@ -1,0 +1,7 @@
+---
+# If set to true, when you'll give a crate, it be given on the world that you're in
+# if set to false the crate will be given in the whole server
+# (NOTICE: THIS WORKS ONLY IF YOU RUN THE COMMAND IN-GAME!)
+giveOnWorld: false
+
+...
