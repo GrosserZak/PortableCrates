@@ -9,6 +9,7 @@ use JetBrains\PhpStorm\Pure;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\StringTag;
 use pocketmine\Player;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\TextFormat as G;
@@ -152,17 +153,20 @@ class PCManager {
     }
 
     /**
-     * This function is used to load crate items on plugin start or to update one
+     * This function is used to load the crate item on plugin start or when one has been updated
      * (When a reward has been added/removed)
      * @param array $data Config data
      * @return Item The result item
      */
     private function getCrateItemByData(array $data) : Item {
         $crateItem = Item::get($data["item"][0], $data["item"][1]);
-        $nbt = $crateItem->getNamedTag();
-        $nbt->setString("PortableCrate", $data["name"]);
-        $nbt->setString("PortableCrateID", $data["id"]);
-        $crateItem->setNamedTag($nbt);
+        $tag = new CompoundTag("", [
+            new CompoundTag("PortableCrates", [
+                new StringTag("Name", $data["name"]),
+                new StringTag("Id", $data["id"])
+            ])
+        ]);
+        $crateItem->setNamedTag($tag);
         $crateItem->setCustomName(G::RESET . $data["customname"]);
         $crateItem->setLore(array_merge($data["lore"], ["", G::RESET . G::GRAY . "(Click to open)", G::RESET . G::GRAY . "(Shift-Click to view rewards)"]));
         return $crateItem;
@@ -201,9 +205,9 @@ class PCManager {
      */
     public function giveCrateReward(array $reward, Player $player) : void {
         $item = Item::get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
+        $item->setNamedTag(new CompoundTag(base64_decode($reward[5])));
         $item->setCustomName($reward[3]);
         $item->setLore($reward[4]);
-        $item->setNamedTag(new CompoundTag(base64_decode($reward[5])));
         if(!$player->getInventory()->canAddItem($item)) {
             $player->getLevel()->dropItem(new Vector3($player->getX(), $player->getY(), $player->getZ()), $item);
             $player->sendMessage(TextFormat::RED . "Your inventory is full! " .  $item->getCustomName() . TextFormat::RESET . TextFormat::RED . " dropped on the ground.");

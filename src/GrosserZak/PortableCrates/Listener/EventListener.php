@@ -15,20 +15,19 @@ class EventListener implements Listener {
     private Main $plugin;
 
     /** @var array */
-    private array $crateCooldown;
+    private array $crateCooldown = [];
 
     public function __construct(Main $plugin) {
         $this->plugin = $plugin;
-        $this->crateCooldown = [];
     }
 
     public function onInteract(PlayerInteractEvent $ev) {
         $player = $ev->getPlayer();
         $item = $player->getInventory()->getItemInHand();
         if($item->hasCompoundTag()) {
-            if($item->getNamedTag()->hasTag("PortableCrate") and $item->getNamedTag()->hasTag("PortableCrateID")) {
+            if(($crateTag = $item->getNamedTag()->getCompoundTag("PortableCrates")) !== null) {
                 $pcMgr = $this->plugin->getPCManager();
-                $crate = $pcMgr->existsCrate($item->getNamedTag()->getString("PortableCrate"));
+                $crate = $pcMgr->existsCrate($crateTag->getString("Name"));
                 if($player->isSneaking()) {
                     if(!$pcMgr->openCrateRewardsGUI($player, $crate)) {
                         $player->sendPopup(G::RED . "Cannot show crate rewards! Contact an administrator");
@@ -42,8 +41,8 @@ class EventListener implements Listener {
                     return;
                 }
                 $crateItem = $crate->getItem();
-                if($item->getNamedTag()->getString("PortableCrateID") !== $crate->getId()) {
-                    $player->sendMessage(G::GREEN . "The version of your crate was old! Now it's updated, Enjoy!");
+                if($crateTag->getString("Id") !== $crate->getId()) {
+                    $player->sendMessage(G::GREEN . "The version of your crate was outdated! Now it's updated, Enjoy!");
                     $pcMgr->giveCrate($player, $player, $crateItem);
                     return;
                 }
