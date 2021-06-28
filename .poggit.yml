@@ -1,0 +1,11 @@
+--- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/GrosserZak/PortableCrates
+build-by-default: true
+branches:
+- main
+projects:
+  PortableCrates:
+    path: ""
+    libs:
+      - src: muqsit/InvMenu/InvMenu
+        version: ^4.0.0
+...
