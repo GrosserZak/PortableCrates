@@ -34,7 +34,7 @@ class PCManager {
         $this->crates = [];
         foreach($this->plugin->getCratesCfg()->getAll() as $index => $data) {
             $crateItem = $this->getCrateItemByData($data);
-            $this->crates[$data["name"]] = new PortableCrate($data["name"], $index, $crateItem, $data["id"], $data["rewards"]);
+            $this->crates[strtolower($data["name"])] = new PortableCrate($data["name"], $index, $crateItem, $data["id"], $data["rewards"]);
         }
     }
 
@@ -70,7 +70,7 @@ class PCManager {
     private function updateCrate(PortableCrate $crate) : void {
         $data = $this->getCrateConfigDataByIndex($crate->getConfigIndex());
         $crateItem = $this->getCrateItemByData($data);
-        $this->crates[$crate->getName()] = new PortableCrate($crate->getName(), $crate->getConfigIndex(), $crateItem, $data["id"], $data["rewards"]);
+        $this->crates[strtolower($crate->getName())] = new PortableCrate($crate->getName(), $crate->getConfigIndex(), $crateItem, $data["id"], $data["rewards"]);
     }
 
     /**
