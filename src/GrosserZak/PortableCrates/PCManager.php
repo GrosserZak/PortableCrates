@@ -43,17 +43,17 @@ class PCManager {
 
     /**
      * This function returns the config data of a crate given its config index
-     * @param int $index
+     * @param int $index The config index of the crate
      * @return array|null
-     * An array, containing the crate data, if it exists in the config file, null otherwise
+     * An array containing the crate data if the crate exists in the config file, null otherwise
      */
     private function getCrateConfigDataByIndex(int $index) : ?array {
         return $this->plugin->getCratesCfg()->get($index) ?? null;
     }
 
     /**
-     * This function returns the PortableCrate of a crate by its name
-     * @param string $name
+     * This function returns the PortableCrate instance of a crate by its name
+     * @param string $name The crate name
      * @return PortableCrate|null
      * A PortableCrate instance if the crate has been found, null otherwise
      */
@@ -74,7 +74,7 @@ class PCManager {
 
     /**
      * This function creates a new crate based on the item held by the player
-     * @param Item $crateItem Item held by the player
+     * @param Item $crateItem The item held by the player
      * @param string $crateName The name for the crate
      * @throws Exception
      */
@@ -96,7 +96,7 @@ class PCManager {
 
     /**
      * This function deletes a crate
-     * @param string $name
+     * @param string $name The crate name
      * @return bool
      * True if the crate has been deleted, false otherwise
      */
@@ -111,10 +111,10 @@ class PCManager {
     }
 
     /**
-     * THis function adds a reward to a crate
+     * This function adds a reward to a crate
      * @param PortableCrate $crate The crate which will be added the reward to
-     * @param Item $item Item held by the player
-     * @param int $prob The probability to be given by the crate
+     * @param Item $item The reward item held by the player
+     * @param int $prob The probability of the reward to be found in the crate
      * @throws Exception
      */
     public function addRewardToCrate(PortableCrate $crate, Item $item, int $prob) : void {
@@ -131,7 +131,7 @@ class PCManager {
     /**
      * This function removes a reward from a crate
      * @param PortableCrate $crate The crate that the reward will be removed from
-     * @param int $rewardIndex The index of the reward
+     * @param int $rewardIndex The index of the reward to be removed
      * @return string
      * The result operation message that will be sent to the command executor
      * @throws Exception
@@ -155,7 +155,7 @@ class PCManager {
     /**
      * This function is used to load the crate item on plugin start or when one has been updated
      * (When a reward has been added/removed)
-     * @param array $data Config data
+     * @param array $data The config data of the crate
      * @return Item The result item
      */
     private function getCrateItemByData(array $data) : Item {
@@ -174,11 +174,11 @@ class PCManager {
 
     /**
      * This function is used to give a player a crate
-     * @param Player $sender The sender
-     * @param Player $player The receiver
-     * @param Item $crateItem The crate to give
-     * @param bool $giveOnWorld If set to true the crate will be given only if the player is on the same world of the sender
-     * @return bool true if the item has been successfully given, false otherwise
+     * @param Player $sender The command sender
+     * @param Player $player The player who's gonna receive the crate
+     * @param Item $crateItem The crate item to be given
+     * @param bool $giveOnWorld If set to true the crate will be given only if the player receiver is on the same world of the command sender
+     * @return bool True if the item has been successfully given, false otherwise
      */
     public function giveCrate(Player $sender, Player $player, Item $crateItem, bool $giveOnWorld = false) : bool{
         if($giveOnWorld){
@@ -200,8 +200,8 @@ class PCManager {
 
     /**
      * This function gives a crate reward (used onInteractEvent when a player opens a crate)
-     * @param array $reward
-     * @param Player $player
+     * @param array $reward The reward data
+     * @param Player $player The player who's gonna receive the reward
      */
     public function giveCrateReward(array $reward, Player $player) : void {
         $item = Item::get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
@@ -219,7 +219,7 @@ class PCManager {
     /**
      * @param Player $player
      * @param PortableCrate $crate
-     * @return bool true if the InvMenu of the crate has been found and sent to the player, false otherwise
+     * @return bool True if the InvMenu of the crate has been found and sent to the player, false otherwise
      */
     public function openCrateRewardsGUI(Player $player, PortableCrate $crate) : bool {
         if(($gui = $crate->getRewardGUI()) === null) return false;

@@ -38,7 +38,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
         $pcMgr = $this->plugin->getPCManager();
         if(!isset($args[0])) {
             if($sender instanceof ConsoleCommandSender) {
-                $sender->sendMessage($pfx . G::RED . " Avaiable commands: \"crate give\" \"crate list\" ");
+                $sender->sendMessage($pfx . G::RED . " Available commands: \"crate give\" \"crate list\" ");
                 return;
             } elseif($sender instanceof Player) {
                 $args[0] = "help";
@@ -55,12 +55,12 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
             case "help":
                 $message = G::GRAY . str_repeat("-", 7) . $pfx . G::GRAY . str_repeat("-", 7) . G::EOL;
                 $message .= G::GREEN . "list" . G::GRAY . ": View all the crates" . G::EOL;
-                $message .= G::GREEN . "info <name>" . G::GRAY . ": View the informations about a crate" . G::EOL;
+                $message .= G::GREEN . "info <name>" . G::GRAY . ": View the information's about a crate" . G::EOL;
                 $message .= G::GREEN . "create <name>" . G::GRAY . ": Creates a crate " . G::RED . "(Must hold an item)" . G::EOL;
                 $message .= G::GREEN . "delete <name>" . G::GRAY . ": Deletes a crate" . G::EOL;
                 $message .= G::GREEN . "add <name> <prob>" . G::GRAY . ": Adds a reward to a crate " . G::RED . "(Must hold an item)" . G::EOL;
                 $message .= G::GREEN . "remove <name> <index>" . G::GRAY . ": Removes a reward from a crate by index " . G::EOL
-                    . G::RED . "(\"/crate <name> info\" for all reward indexes )" . G::EOL;
+                    . G::RED . "(\"/portablecrate <name> info\" for all reward indexes )" . G::EOL;
                 $message .= G::GREEN . "give <name> all|<player> <count>" . G::GRAY . ": Give a player or all the online players a crate" . G::EOL;
                 $message .= G::GREEN . "toggle" . G::GRAY . ": Toggles on world give crates" . G::EOL;
                 $message .= G::GREEN . "reload" . G::GRAY . ": Reload all config files";
@@ -75,11 +75,11 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 break;
             case "info":
                 if(!isset($args[1])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate info <name>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate info <name>");
                     return;
                 }
                 if(($crate = $pcMgr->existsCrate($args[1])) === null) {
-                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . G::RESET . G::RED . "! Run \"/crate list\" to view all the crates");
+                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . G::RESET . G::RED . "! Run \"/portablecrate list\" to view all the crates");
                     return;
                 }
                 $message = G::GRAY . str_repeat("-", 7) . $pfx . G::GRAY . str_repeat("-", 7) . G::EOL;
@@ -95,7 +95,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 if(!isset($args[1])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate create <name>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate create <name>");
                     return;
                 }
                 if($pcMgr->existsCrate($args[1]) !== null) {
@@ -116,7 +116,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 if(!isset($args[1])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate delete <name>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate delete <name>");
                     return;
                 }
                 $sender->sendMessage($pfx . ($pcMgr->deleteCrateByName($args[1]) ?  G::GREEN . " You've deleted " . $args[1] : G::RED . " There's no crate registered with name " . $args[1] . "!" ));
@@ -127,24 +127,24 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 if(!isset($args[1])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate add <name> <prob>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate add <name> <prob>");
                     return;
                 }
                 if(($crate = $pcMgr->existsCrate($args[1])) === null) {
-                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/crate list\" to view all the crates");
+                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
                     return;
                 }
                 if(!isset($args[2])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate add $args[1] <prob>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate add $args[1] <prob>");
                     return;
                 }
-                if(!is_numeric($args[2]) or $args[2] <= 0) {
-                    $sender->sendMessage($pfx . G::RED . " Probability must be a numeric value greater than 0!");
+                if(!is_numeric($args[2]) or ($args[2] <= 0 or $args[2] > 100)) {
+                    $sender->sendMessage($pfx . G::RED . " Probability must be a numeric value between 0 and 100 included!");
                     return;
                 }
                 $item = $sender->getInventory()->getItemInHand();
                 $pcMgr->addRewardToCrate($crate, $item, (int)$args[2]);
-                $sender->sendMessage($pfx . G::GREEN . " You've added x" . $item->getCount() . " " . $item->getName() . G::RESET . G::GREEN . ", with " . $args[2] . "% chance, to " . ucfirst($crate->getName()) . " Crate");
+                $sender->sendMessage($pfx . G::GREEN . " You've added x" . $item->getCount() . " " . $item->getName() . G::RESET . G::GREEN . ", with " . $args[2] . "% chance, to " . $crate->getName() . " Crate");
                 break;
             case "remove":
                 if(!$sender->hasPermission("portablecrate.command.edit")) {
@@ -152,17 +152,17 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 if(!isset($args[1])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate remove <name> <index>" . G::EOL .
-                        "Use \"/crate info <name>\" to see all reward indexes");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate remove <name> <index>" . G::EOL .
+                        "Use \"/portablecrate info <name>\" to see all reward indexes");
                     return;
                 }
                 if(($crate = $pcMgr->existsCrate($args[1])) === null) {
-                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/crate list\" to view all the crates");
+                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
                     return;
                 }
                 if(!isset($args[2])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate remove $args[1] <index>" . G::EOL .
-                        "Use \"/crate info $args[1]\" to see all reward indexes");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate remove $args[1] <index>" . G::EOL .
+                        "Use \"/portablecrate info $args[1]\" to see all reward indexes");
                     return;
                 }
                 if(!is_numeric($args[2]) or $args[2] <= 0) {
@@ -178,11 +178,11 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 if(!isset($args[1]) or !isset($args[2])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /crate give <name> all|<player> <count>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate give <name> all|<player> <count>");
                     return;
                 }
                 if(($crate = $pcMgr->existsCrate($args[1])) === null) {
-                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/crate list\" to view all the crates");
+                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
                     return;
                 }
                 $count = $args[3] ?? 1;
@@ -241,7 +241,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $sender->sendMessage($pfx . G::GREEN . " All files have been reloaded!");
                 break;
             default:
-                $sender->sendMessage($pfx . G::RED . " Unknown subcommand! Run \"/crate help\" for a full list of commands");
+                $sender->sendMessage($pfx . G::RED . " Unknown subcommand! Run \"/portablecrate help\" for a full list of commands");
         }
     }
 
