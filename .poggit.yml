@@ -5,6 +5,7 @@ branches:
 projects:
   PortableCrates:
     path: ""
+    icon: "PortableCrates.gif"
     libs:
       - src: muqsit/InvMenu/InvMenu
         version: ^4.0.0
