@@ -141,15 +141,18 @@ class PCManager {
         $cratesCfg = $this->plugin->getCratesCfg();
         $lastKey = array_key_last($crate->getRewards());
         if($rewardIndex > $lastKey) {
-            return G::RED . " The reward index must be " . ($lastKey === 0 ? "1" : "between 1 and " . ucfirst($crate->getName()) . " Crate max reward index of " . ($lastKey + 1)) . "!";
+            return G::RED . " The reward index must be " . ($lastKey === 0 ? "1" : "between 1 and " . $crate->getName() . " Crate max reward index of " . ($lastKey + 1)) . "!";
         }
         $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
-        array_splice($rewards, $rewardIndex, 1);
+        if(count($rewards) === 0) {
+            return G::RED . " There's no rewards to be removed from this crate!";
+        }
+        $removedReward = array_splice($rewards, $rewardIndex, 1)[0];
         $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
         $this->updateCrate($crate);
-        return G::GREEN . " You've removed the reward with index " . ($rewardIndex+1) . ": x" . $rewards[$rewardIndex][2] . " " . $rewards[$rewardIndex][3] . G::RESET . G::GREEN . " from " . ucfirst($crate->getName()) . " Crate";
+        return G::GREEN . " You've removed the reward with index " . ($rewardIndex+1) . ": x" . $removedReward[2] . " " . $removedReward[3] . G::RESET . G::GREEN . " with " . $removedReward[6] . "% probability from " . $crate->getName() . " Crate";
     }
 
     /**
@@ -160,13 +163,12 @@ class PCManager {
      */
     private function getCrateItemByData(array $data) : Item {
         $crateItem = Item::get($data["item"][0], $data["item"][1]);
-        $tag = new CompoundTag("", [
+        $crateItem->setNamedTag(new CompoundTag("", [
             new CompoundTag("PortableCrates", [
                 new StringTag("Name", $data["name"]),
                 new StringTag("Id", $data["id"])
             ])
-        ]);
-        $crateItem->setNamedTag($tag);
+        ]));
         $crateItem->setCustomName(G::RESET . $data["customname"]);
         $crateItem->setLore(array_merge($data["lore"], ["", G::RESET . G::GRAY . "(Click to open)", G::RESET . G::GRAY . "(Shift-Click to view rewards)"]));
         return $crateItem;

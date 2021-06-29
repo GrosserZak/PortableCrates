@@ -9,7 +9,6 @@ use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\ConsoleCommandSender;
 use pocketmine\command\PluginIdentifiableCommand;
-use pocketmine\item\Item;
 use pocketmine\Player;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
@@ -103,7 +102,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 $item = $sender->getInventory()->getIteminHand();
-                if($item->getId() === Item::AIR) {
+                if($item->isNull()) {
                     $sender->sendMessage($pfx . G::RED . " You must hold an item to create a crate. (It's preferred that the item has custom name and a lore)");
                     return;
                 }

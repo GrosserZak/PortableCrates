@@ -41,14 +41,14 @@ class EventListener implements Listener {
                     return;
                 }
                 $crateItem = $crate->getItem();
+                $item->pop();
+                $player->getInventory()->setItemInHand($item);
                 if($crateTag->getString("Id") !== $crate->getId()) {
                     $player->sendMessage(G::GREEN . "The version of your crate was outdated! Now it's updated, Enjoy!");
                     $pcMgr->giveCrate($player, $player, $crateItem);
                     return;
                 }
                 $this->crateCooldown[$player->getLowerCaseName()] = time() + 3;
-                $item->pop();
-                $player->getInventory()->setItemInHand($item);
                 $message = G::GRAY . $player->getName() . " has opened " . $crateItem->getCustomName() . G::RESET . G::GRAY . " and received:" . G::EOL;
                 $randomizer = new WeightedRandom();
                 foreach($crate->getRewards() as $reward) {
