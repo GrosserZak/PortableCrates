@@ -8,6 +8,7 @@ use GrosserZak\PortableCrates\Utils\PortableCrate;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
+use pocketmine\nbt\LittleEndianNBTStream;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
 use pocketmine\Player;
@@ -121,7 +122,7 @@ class PCManager {
         $crateIndex = $crate->getConfigIndex();
         $cratesCfg = $this->plugin->getCratesCfg();
         $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
-        $rewards[] = [$item->getId(), $item->getDamage(), $item->getCount(), $item->getName(), $item->getLore(), base64_encode($item->getCompoundTag()), $prob];
+        $rewards[] = [$item->getId(), $item->getDamage(), $item->getCount(), $item->getName(), $item->getLore(), base64_encode((new LittleEndianNBTStream())->write($item->getNamedTag())), $prob];
         $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
@@ -207,7 +208,9 @@ class PCManager {
      */
     public function giveCrateReward(array $reward, Player $player) : void {
         $item = Item::get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
-        $item->setNamedTag(new CompoundTag(base64_decode($reward[5])));
+        /** @var CompoundTag $tag */
+        $tag = (new LittleEndianNBTStream())->read(base64_decode($reward[5]));
+        $item->setNamedTag($tag);
         $item->setCustomName($reward[3]);
         $item->setLore($reward[4]);
         if(!$player->getInventory()->canAddItem($item)) {
