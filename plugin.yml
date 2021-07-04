@@ -5,13 +5,13 @@ api: 3.0.0
 author: GrosserZak
 description: Plugin that give carriable crates
 permissions:
-  portablecrate.command:
+  portablecrates.command:
     description: "Allows the player to execute all the commands"
     default: false
     children:
-      portablecrate.command.give:
+      portablecrates.command.give:
         description: "Allows the player to give crates"
         default: op
-      portablecrate.command.edit:
+      portablecrates.command.edit:
         description: "Allows the player to edit crates(Create/delete crates, add/remove rewards to crates)"
         default: op

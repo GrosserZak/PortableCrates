@@ -24,7 +24,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
 
     public function __construct(Main $plugin, Config $crates) {
         parent::__construct("portablecrate", "Portable crate command", "/portablecrate help", ["pcrate"]);
-        $this->setPermission("portablecrate.command.give;portablecrate.command.edit");
+        $this->setPermission("portablecrates.command.give;portablecrates.command.edit");
         $this->plugin = $plugin;
         $this->crates = $crates;
     }
@@ -89,7 +89,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $sender->sendMessage($message);
                 break;
             case "create":
-                if(!$sender->hasPermission("portablecrate.command.edit")) {
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
                     $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
                     return;
                 }
@@ -110,7 +110,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $pcMgr->createNewCrate($item, $args[1]);
                 break;
             case "delete":
-                if(!$sender->hasPermission("portablecrate.command.edit")) {
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
                     $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
                     return;
                 }
@@ -121,7 +121,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $sender->sendMessage($pfx . ($pcMgr->deleteCrateByName($args[1]) ?  G::GREEN . " You've deleted " . $args[1] : G::RED . " There's no crate registered with name " . $args[1] . "!" ));
                 break;
             case "add":
-                if(!$sender->hasPermission("portablecrate.command.edit")) {
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
                     $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
                     return;
                 }
@@ -146,7 +146,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $sender->sendMessage($pfx . G::GREEN . " You've added x" . $item->getCount() . " " . $item->getName() . G::RESET . G::GREEN . ", with " . $args[2] . "% chance, to " . $crate->getName() . " Crate");
                 break;
             case "remove":
-                if(!$sender->hasPermission("portablecrate.command.edit")) {
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
                     $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
                     return;
                 }
@@ -172,7 +172,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $sender->sendMessage($pfx . $pcMgr->removeRewardFromCrate($crate, $rewardIndex));
                 break;
             case "give":
-                if(!$sender->hasPermission("portablecrate.command.give")) {
+                if(!$sender->hasPermission("portablecrates.command.give")) {
                     $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
                     return;
                 }
@@ -220,7 +220,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 }
                 break;
             case "toggle":
-                if(!$sender->hasPermission("portablecrate.command.edit")) {
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
                     $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
                     return;
                 }
@@ -231,7 +231,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $cfg->save();
                 break;
             case "reload":
-                if(!$sender->hasPermission("portablecrate.command.edit")) {
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
                     $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
                     return;
                 }
