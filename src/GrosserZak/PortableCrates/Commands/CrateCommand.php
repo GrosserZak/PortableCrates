@@ -32,7 +32,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
     /**
      * @throws Exception
      */
-    public function execute(CommandSender $sender, string $commandLabel, array $args) {
+    public function execute(CommandSender $sender, string $commandLabel, array $args) : void {
         $pfx = $this->plugin->getPCManager()::PREFIX;
         $pcMgr = $this->plugin->getPCManager();
         if(!isset($args[0])) {
@@ -101,7 +101,8 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     $sender->sendMessage($pfx . G::RED . " There's already a crate with name " . $args[1] . "!");
                     return;
                 }
-                $item = $sender->getInventory()->getIteminHand();
+                /** @var Player $sender */
+                $item = $sender->getInventory()->getItemInHand();
                 if($item->isNull()) {
                     $sender->sendMessage($pfx . G::RED . " You must hold an item to create a crate. (It's preferred that the item has custom name and a lore)");
                     return;
@@ -141,6 +142,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     $sender->sendMessage($pfx . G::RED . " Probability must be a numeric value between 0 and 100 included!");
                     return;
                 }
+                /** @var Player $sender */
                 $item = $sender->getInventory()->getItemInHand();
                 $pcMgr->addRewardToCrate($crate, $item, (int)$args[2]);
                 $sender->sendMessage($pfx . G::GREEN . " You've added x" . $item->getCount() . " " . $item->getName() . G::RESET . G::GREEN . ", with " . $args[2] . "% chance, to " . $crate->getName() . " Crate");
@@ -191,7 +193,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 }
                 $crateItem = $crate->getItem();
                 $crateItem->setCount($count);
-                $giveOnWorld = $this->plugin->getConfig()->get("giveOnWorld");
+                $giveOnWorld = ($this->plugin->getConfig()->get("giveOnWorld") and $sender instanceof Player);
                 if($args[2] !== "all") {
                     $player = $this->plugin->getServer()->getPlayer($args[2]);
                     if(!$player instanceof Player) {
@@ -225,7 +227,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 $cfg = $this->plugin->getConfig();
-                $value = !$cfg->get("giveOnWorld");
+                $value = !((bool)$cfg->get("giveOnWorld"));
                 $cfg->set("giveOnWorld", $value);
                 $sender->sendMessage($pfx . G::GRAY . " On world give crates has been toggled " . ($value ? G::GREEN . "ON" : G::RED . "OFF"));
                 $cfg->save();

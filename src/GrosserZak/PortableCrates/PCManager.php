@@ -5,7 +5,6 @@ namespace GrosserZak\PortableCrates;
 
 use Exception;
 use GrosserZak\PortableCrates\Utils\PortableCrate;
-use JetBrains\PhpStorm\Pure;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\LittleEndianNBTStream;
@@ -58,7 +57,6 @@ class PCManager {
      * @return PortableCrate|null
      * A PortableCrate instance if the crate has been found, null otherwise
      */
-    #[Pure]
     public function existsCrate(string $name) : ?PortableCrate {
         return $this->crates[strtolower($name)] ?? null;
     }
@@ -209,7 +207,7 @@ class PCManager {
     public function giveCrateReward(array $reward, Player $player) : void {
         $item = Item::get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
         /** @var CompoundTag $tag */
-        $tag = (new LittleEndianNBTStream())->read(base64_decode($reward[5]));
+        $tag = (new LittleEndianNBTStream())->read(base64_decode($reward[5], false));
         $item->setNamedTag($tag);
         $item->setCustomName($reward[3]);
         $item->setLore($reward[4]);
