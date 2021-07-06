@@ -45,7 +45,7 @@ class EventListener implements Listener {
                 $player->getInventory()->setItemInHand($item);
                 if($crateTag->getString("Id") !== $crate->getId()) {
                     $player->sendMessage(G::GREEN . "The version of your crate was outdated! Now it's updated, Enjoy!");
-                    $pcMgr->giveCrate($player, $player, $crateItem);
+                    $pcMgr->giveCrate($player, $crateItem);
                     return;
                 }
                 $this->crateCooldown[$player->getLowerCaseName()] = time() + 3;

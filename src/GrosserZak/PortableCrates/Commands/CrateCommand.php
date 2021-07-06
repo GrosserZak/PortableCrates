@@ -193,30 +193,37 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 }
                 $crateItem = $crate->getItem();
                 $crateItem->setCount($count);
-                $giveOnWorld = ($this->plugin->getConfig()->get("giveOnWorld") and $sender instanceof Player);
+                $giveOnWorld = $this->plugin->getConfig()->get("giveOnWorld");
                 if($args[2] !== "all") {
                     $player = $this->plugin->getServer()->getPlayer($args[2]);
                     if(!$player instanceof Player) {
                         $sender->sendMessage($pfx . G::RED . " This player isn't online!");
                         return;
                     }
-                    if($pcMgr->giveCrate($sender, $player, $crateItem, $giveOnWorld)) {
+                    if(!$giveOnWorld or !$sender instanceof Player) {
                         $sender->sendMessage($pfx . G::GRAY . " You gave " . $player->getName() . ": " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
+                        $pcMgr->giveCrate($player, $crateItem);
                     } else {
-                        $sender->sendMessage($pfx . G::RED . " " . $player->getName() . " is not in the world you are in!");
+                        if($sender->getLevel()->getFolderName() === $player->getLevel()->getFolderName()) {
+                            $sender->sendMessage($pfx . G::GRAY . " You gave " . $player->getName() . ": " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
+                            $pcMgr->giveCrate($player, $crateItem);
+                        } else {
+                            $sender->sendMessage($pfx . G::RED . " " . $player->getName() . " is not in the world you are on!");
+                        }
                     }
                 } else {
-                    if(!$giveOnWorld) {
+                    if(!$giveOnWorld or !$sender instanceof Player) {
                         $this->plugin->getServer()->broadcastMessage($pfx . G::YELLOW . " Everyone has been given: " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
+                        foreach($this->plugin->getServer()->getOnlinePlayers() as $p) {
+                            $pcMgr->giveCrate($p, $crateItem);
+                        }
                     } else {
                         foreach($this->plugin->getServer()->getOnlinePlayers() as $p) {
                             if($sender->getLevel()->getFolderName() === $p->getLevel()->getFolderName()) {
                                 $p->sendMessage($pfx . G::YELLOW . " Everyone has been given: " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
+                                $pcMgr->giveCrate($p, $crateItem);
                             }
                         }
-                    }
-                    foreach($this->plugin->getServer()->getOnlinePlayers() as $player) {
-                        $pcMgr->giveCrate($sender, $player, $crateItem, $giveOnWorld);
                     }
                     $sender->sendMessage($pfx . G::GRAY . " You gave everyone: " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
                 }

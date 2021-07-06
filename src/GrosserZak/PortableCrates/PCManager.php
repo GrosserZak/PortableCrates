@@ -175,18 +175,10 @@ class PCManager {
 
     /**
      * This function is used to give a player a crate
-     * @param Player $sender The command sender
      * @param Player $player The player who's gonna receive the crate
      * @param Item $crateItem The crate item to be given
-     * @param bool $giveOnWorld If set to true the crate will be given only if the player receiver is on the same world of the command sender
-     * @return bool True if the item has been successfully given, false otherwise
      */
-    public function giveCrate(Player $sender, Player $player, Item $crateItem, bool $giveOnWorld = false) : bool{
-        if($giveOnWorld){
-            if($sender->getLevel()->getFolderName() !== $player->getLevel()->getFolderName()){
-                return false;
-            }
-        }
+    public function giveCrate(Player $player, Item $crateItem) : void {
         $playerInv = $player->getInventory();
         if($playerInv->canAddItem($crateItem)){
             $playerInv->addItem($crateItem);
@@ -196,7 +188,6 @@ class PCManager {
             $player->getLevel()->dropItem($pos, $crateItem);
             $player->sendMessage($this::PREFIX . G::WHITE . " x" . $crateItem->getCount() . " " . $crateItem->getCustomName() . G::RESET . G::RED . " Has been dropped on the ground because your inventory is full!");
         }
-        return true;
     }
 
     /**
