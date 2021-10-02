@@ -186,7 +186,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
                     return;
                 }
-                $count = $args[3] ?? 1;
+                $count = (int)$args[3] ?? 1;
                 if(!is_numeric($count) or $count <= 0) {
                     $sender->sendMessage($pfx . G::RED . " The number of crates to give must be a numeric value greater than 0!");
                     return;
