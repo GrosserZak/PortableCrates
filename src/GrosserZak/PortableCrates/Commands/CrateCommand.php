@@ -187,7 +187,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 $count = $args[3] ?? 1;
-                if(!is_numeric($count) and $count <= 0) {
+                if(!is_numeric($count) or $count <= 0) {
                     $sender->sendMessage($pfx . G::RED . " The number of crates to give must be a numeric value greater than 0!");
                     return;
                 }
