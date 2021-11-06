@@ -60,7 +60,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $message .= G::GREEN . "add <name> <prob>" . G::GRAY . ": Adds a reward to a crate " . G::RED . "(Must hold an item)" . G::EOL;
                 $message .= G::GREEN . "remove <name> <index>" . G::GRAY . ": Removes a reward from a crate by index " . G::EOL
                     . G::RED . "(\"/portablecrate <name> info\" for all reward indexes )" . G::EOL;
-                $message .= G::GREEN . "give <name> all|<player> <count>" . G::GRAY . ": Give a player or all the online players a crate" . G::EOL;
+                $message .= G::GREEN . "give <name> all|<player> [count]" . G::GRAY . ": Give a player or all the online players a crate" . G::EOL;
                 $message .= G::GREEN . "toggle" . G::GRAY . ": Toggles on world give crates" . G::EOL;
                 $message .= G::GREEN . "reload" . G::GRAY . ": Reload all config files";
                 $sender->sendMessage($message);
@@ -179,14 +179,14 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                     return;
                 }
                 if(!isset($args[1]) or !isset($args[2])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate give <name> all|<player> <count>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate give <name> all|<player> [count]");
                     return;
                 }
                 if(($crate = $pcMgr->existsCrate($args[1])) === null) {
                     $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
                     return;
                 }
-                $count = (int)$args[3] ?? 1;
+                $count = (int)($args[3] ?? 1);
                 if(!is_numeric($count) or $count <= 0) {
                     $sender->sendMessage($pfx . G::RED . " The number of crates to give must be a numeric value greater than 0!");
                     return;
