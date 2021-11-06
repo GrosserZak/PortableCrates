@@ -5,8 +5,10 @@ namespace GrosserZak\PortableCrates\Listener;
 
 use GrosserZak\PortableCrates\Main;
 use GrosserZak\PortableCrates\Utils\WeightedRandom;
+use pocketmine\block\BlockIds;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\item\ItemFactory;
 use pocketmine\utils\TextFormat as G;
 
 class EventListener implements Listener {
@@ -41,13 +43,16 @@ class EventListener implements Listener {
                     return;
                 }
                 $crateItem = $crate->getItem();
-                $item->pop();
-                $player->getInventory()->setItemInHand($item);
                 if($crateTag->getString("Id") !== $crate->getId()) {
+                    $crateItem->setCount($item->getCount());
+                    $player->getInventory()->setItemInHand(ItemFactory::get(BlockIds::AIR));
                     $player->sendMessage(G::GREEN . "The version of your crate was outdated! Now it's updated, Enjoy!");
                     $pcMgr->giveCrate($player, $crateItem);
+                    $ev->setCancelled();
                     return;
                 }
+                $item->pop();
+                $player->getInventory()->setItemInHand($item);
                 $this->crateCooldown[$player->getLowerCaseName()] = time() + 3;
                 $message = G::GRAY . $player->getName() . " has opened " . $crateItem->getCustomName() . G::RESET . G::GRAY . " and received:" . G::EOL;
                 $randomizer = new WeightedRandom();
