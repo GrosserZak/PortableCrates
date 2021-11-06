@@ -3,12 +3,11 @@ declare(strict_types=1);
 
 namespace GrosserZak\PortableCrates\Utils;
 
-use Ds\Deque;
 use Generator;
 use pocketmine\utils\Random;
 
 /**
- * This's Muqsit's code check it out on link below
+ * Originally made by Muqsit
  * @link https://gist.github.com/Muqsit/5042779c0e87fd55e55560f83e24af69
  */
 
@@ -46,39 +45,37 @@ class WeightedRandom {
         $average = 1.0 / $probabilities_c;
         $probabilities = $this->probabilities;
 
-        $small = new Deque();
-        $small->allocate($probabilities_c);
-        $large = new Deque();
-        $large->allocate($probabilities_c);
+        $small = [];
+        $large = [];
 
         for($i = 0; $i < $probabilities_c; ++$i) {
             if($probabilities[$i] >= $average) {
-                $large->push($i);
+                $large[] = $i;
             } else {
-                $small->push($i);
+                $small[] = $i;
             }
         }
 
-        while(!$small->isEmpty() && !$large->isEmpty()) {
-            $less = $small->pop();
-            $more = $large->pop();
+        while(count($small) > 0 && count($large) > 0) {
+            $less = array_pop($small);
+            $more = array_pop($large);
 
             $this->probabilities[$less] = $probabilities[$less] * $probabilities_c;
             $this->aliases[$less] = $more;
 
             $probabilities[$more] = ($probabilities[$more] + $probabilities[$less]) - $average;
             if($probabilities[$more] >= 1.0 / $probabilities_c) {
-                $large->push($more);
+                $large[] = $more;
             } else {
-                $small->push($more);
+                $small[] = $more;
             }
         }
 
-        while(!$small->isEmpty()) {
-            $this->probabilities[$small->pop()] = 1.0;
+        while(count($small) > 0) {
+            $this->probabilities[array_pop($small)] = 1.0;
         }
-        while(!$large->isEmpty()) {
-            $this->probabilities[$large->pop()] = 1.0;
+        while(count($large) > 0) {
+            $this->probabilities[array_pop($large)] = 1.0;
         }
     }
 
