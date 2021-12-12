@@ -83,7 +83,7 @@ class PCManager {
         $newCrate = array(
             "name" => $crateName,
             "id" => substr(sha1(random_bytes(8)), 0, 8),
-            "item" => [$crateItem->getId(), $crateItem->getMeta() ?? 0],
+            "item" => [$crateItem->getId(), $crateItem->getMeta()],
             "customname" => $crateItem->getName(),
             "lore" => $crateItem->getLore(),
             "rewards" => []
@@ -120,7 +120,7 @@ class PCManager {
         $crateIndex = $crate->getConfigIndex();
         $cratesCfg = $this->plugin->getCratesCfg();
         $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
-        $rewards[] = [$item->getId(), $item->getMeta() ?? 0, $item->getCount(), $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
+        $rewards[] = [$item->getId(), $item->getMeta(), $item->getCount(), $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
         $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
