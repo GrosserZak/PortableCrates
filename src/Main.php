@@ -17,7 +17,7 @@ class Main extends PluginBase {
     /** @var PCManager */
     private PCManager $pcManager;
 
-    public function onEnable() {
+    public function onEnable() : void{
         if(!InvMenuHandler::isRegistered()){
             InvMenuHandler::register($this);
         }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace GrosserZak\PortableCrates\Utils;
 
 use muqsit\invmenu\InvMenu;
+use muqsit\invmenu\type\InvMenuTypeIds;
+use pocketmine\block\VanillaBlocks;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\utils\TextFormat as G;
@@ -43,16 +45,16 @@ class PortableCrate {
         if($nRewards > 54) {
             return null;
         }
-        $menu = InvMenu::create(($nRewards < 27 ? InvMenu::TYPE_CHEST : InvMenu::TYPE_DOUBLE_CHEST));
+        $menu = InvMenu::create(($nRewards < 27 ? InvMenuTypeIds::TYPE_CHEST : InvMenuTypeIds::TYPE_DOUBLE_CHEST));
         $menu->setListener(InvMenu::readonly());
         $rewardsInv = $menu->getInventory();
         for($i=0;$i<$rewardsInv->getSize();$i++) {
             if($i >= $rewardsInv->getSize()) break;
             if(!isset($rewards[$i])) {
-                $item = ItemFactory::get(Item::STAINED_GLASS_PANE, 15)->setCustomName(G::RESET);
+                $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
             } else {
                 $reward = $rewards[$i];
-                $item = ItemFactory::get((int)$reward[0], (int)$reward[1], (int)$reward[2])
+                $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], (int)$reward[2])
                     ->setCustomName(G::RESET . $reward[3])
                     ->setLore(array_merge($reward[4], ["", G::RESET . G::GREEN . $reward[6] . "% probability"]));
             }

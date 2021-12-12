@@ -1,17 +1,15 @@
 name: PortableCrates
+src-namespace-prefix: GrosserZak\PortableCrates
 main: GrosserZak\PortableCrates\Main
-version: 1.1.0
-api: 3.21.0
+version: 2.0.0
+api: 4.0.0
 author: GrosserZak
 description: Plugin that give carriable crates
 permissions:
-  portablecrates.command:
-    description: "Allows the player to execute all the commands"
-    default: false
-    children:
-      portablecrates.command.give:
-        description: "Allows the player to give crates"
-        default: op
-      portablecrates.command.edit:
-        description: "Allows the player to edit crates(Create/delete crates, add/remove rewards to crates)"
-        default: op
+  portablecrates.command.give:
+    description: "Allows the player to give crates"
+    default: op
+  portablecrates.command.edit:
+    description: "Allows the player to edit crates(Create/delete crates, add/remove rewards to crates)"
+    default: op
+

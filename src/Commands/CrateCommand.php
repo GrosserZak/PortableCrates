@@ -7,14 +7,13 @@ use Exception;
 use GrosserZak\PortableCrates\Main;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\command\ConsoleCommandSender;
-use pocketmine\command\PluginIdentifiableCommand;
-use pocketmine\Player;
+use pocketmine\console\ConsoleCommandSender;
+use pocketmine\player\Player;
 use pocketmine\plugin\Plugin;
 use pocketmine\utils\Config;
 use pocketmine\utils\TextFormat as G;
 
-class CrateCommand extends Command implements PluginIdentifiableCommand {
+class CrateCommand extends Command {
 
     /** @var Main */
     private Main $plugin;
@@ -195,7 +194,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $crateItem->setCount($count);
                 $giveOnWorld = $this->plugin->getConfig()->get("giveOnWorld");
                 if($args[2] !== "all") {
-                    $player = $this->plugin->getServer()->getPlayer($args[2]);
+                    $player = $this->plugin->getServer()->getPlayerByPrefix($args[2]);
                     if(!$player instanceof Player) {
                         $sender->sendMessage($pfx . G::RED . " This player isn't online!");
                         return;
@@ -204,7 +203,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                         $sender->sendMessage($pfx . G::GRAY . " You gave " . $player->getName() . ": " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
                         $pcMgr->giveCrate($player, $crateItem);
                     } else {
-                        if($sender->getLevel()->getFolderName() === $player->getLevel()->getFolderName()) {
+                        if($sender->getWorld()->getFolderName() === $player->getWorld()->getFolderName()) {
                             $sender->sendMessage($pfx . G::GRAY . " You gave " . $player->getName() . ": " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
                             $pcMgr->giveCrate($player, $crateItem);
                         } else {
@@ -219,7 +218,7 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                         }
                     } else {
                         foreach($this->plugin->getServer()->getOnlinePlayers() as $p) {
-                            if($sender->getLevel()->getFolderName() === $p->getLevel()->getFolderName()) {
+                            if($sender->getWorld()->getFolderName() === $p->getWorld()->getFolderName()) {
                                 $p->sendMessage($pfx . G::YELLOW . " Everyone has been given: " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
                                 $pcMgr->giveCrate($p, $crateItem);
                             }
@@ -252,9 +251,4 @@ class CrateCommand extends Command implements PluginIdentifiableCommand {
                 $sender->sendMessage($pfx . G::RED . " Unknown subcommand! Run \"/portablecrate help\" for a full list of commands");
         }
     }
-
-    public function getPlugin(): Plugin {
-        return $this->plugin;
-    }
-
 }

@@ -6,11 +6,11 @@ namespace GrosserZak\PortableCrates;
 use Exception;
 use GrosserZak\PortableCrates\Utils\PortableCrate;
 use pocketmine\item\Item;
-use pocketmine\math\Vector3;
-use pocketmine\nbt\LittleEndianNBTStream;
+use pocketmine\item\ItemFactory;
+use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\nbt\tag\StringTag;
-use pocketmine\Player;
+use pocketmine\nbt\TreeRoot;
+use pocketmine\player\Player;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\TextFormat as G;
 
@@ -83,7 +83,7 @@ class PCManager {
         $newCrate = array(
             "name" => $crateName,
             "id" => substr(sha1(random_bytes(8)), 0, 8),
-            "item" => [$crateItem->getId(), $crateItem->getDamage()],
+            "item" => [$crateItem->getId(), $crateItem->getMeta() ?? 0],
             "customname" => $crateItem->getName(),
             "lore" => $crateItem->getLore(),
             "rewards" => []
@@ -120,7 +120,7 @@ class PCManager {
         $crateIndex = $crate->getConfigIndex();
         $cratesCfg = $this->plugin->getCratesCfg();
         $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
-        $rewards[] = [$item->getId(), $item->getDamage(), $item->getCount(), $item->getName(), $item->getLore(), base64_encode((new LittleEndianNBTStream())->write($item->getNamedTag())), $prob];
+        $rewards[] = [$item->getId(), $item->getMeta() ?? 0, $item->getCount(), $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
         $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
@@ -161,13 +161,13 @@ class PCManager {
      * @return Item The result item
      */
     private function getCrateItemByData(array $data) : Item {
-        $crateItem = Item::get($data["item"][0], $data["item"][1]);
-        $crateItem->setNamedTag(new CompoundTag("", [
-            new CompoundTag("PortableCrates", [
-                new StringTag("Name", $data["name"]),
-                new StringTag("Id", $data["id"])
-            ])
-        ]));
+        $crateItem = ItemFactory::getInstance()->get($data["item"][0], $data["item"][1]);
+        $crateItem->setNamedTag(CompoundTag::create()
+            ->setTag("PortableCrates", CompoundTag::create()
+                ->setString("Name", $data["name"])
+                ->setString("Id", $data["id"])
+            )
+        );
         $crateItem->setCustomName(G::RESET . $data["customname"]);
         $crateItem->setLore(array_merge($data["lore"], ["", G::RESET . G::GRAY . "(Click to open)", G::RESET . G::GRAY . "(Shift-Click to view rewards)"]));
         return $crateItem;
@@ -184,8 +184,8 @@ class PCManager {
             $playerInv->addItem($crateItem);
             $player->sendMessage($this::PREFIX . G::GRAY . " You have received: " . G::WHITE . "x" . $crateItem->getCount() . " " . $crateItem->getCustomName());
         } else {
-            $pos = new Vector3($player->getX(), $player->getY(), $player->getZ());
-            $player->getLevel()->dropItem($pos, $crateItem);
+            $pos = $player->getPosition()->asVector3();
+            $player->getWorld()->dropItem($pos, $crateItem);
             $player->sendMessage($this::PREFIX . G::WHITE . " x" . $crateItem->getCount() . " " . $crateItem->getCustomName() . G::RESET . G::RED . " Has been dropped on the ground because your inventory is full!");
         }
     }
@@ -196,14 +196,13 @@ class PCManager {
      * @param Player $player The player who's gonna receive the reward
      */
     public function giveCrateReward(array $reward, Player $player) : void {
-        $item = Item::get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
-        /** @var CompoundTag $tag */
-        $tag = (new LittleEndianNBTStream())->read(base64_decode($reward[5], false));
+        $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
+        $tag = (new LittleEndianNbtSerializer())->read(base64_decode($reward[5], false))->mustGetCompoundTag();
         $item->setNamedTag($tag);
         $item->setCustomName($reward[3]);
         $item->setLore($reward[4]);
         if(!$player->getInventory()->canAddItem($item)) {
-            $player->getLevel()->dropItem(new Vector3($player->getX(), $player->getY(), $player->getZ()), $item);
+            $player->getWorld()->dropItem($player->getPosition()->asVector3(), $item);
             $player->sendMessage(TextFormat::RED . "Your inventory is full! " .  $item->getCustomName() . TextFormat::RESET . TextFormat::RED . " dropped on the ground.");
         } else {
             $player->getInventory()->addItem($item);
