@@ -10,10 +10,11 @@ use pocketmine\command\CommandSender;
 use pocketmine\console\ConsoleCommandSender;
 use pocketmine\player\Player;
 use pocketmine\plugin\Plugin;
+use pocketmine\plugin\PluginOwned;
 use pocketmine\utils\Config;
 use pocketmine\utils\TextFormat as G;
 
-class CrateCommand extends Command {
+class CrateCommand extends Command implements PluginOwned {
 
     /** @var Main */
     private Main $plugin;
@@ -250,5 +251,9 @@ class CrateCommand extends Command {
             default:
                 $sender->sendMessage($pfx . G::RED . " Unknown subcommand! Run \"/portablecrate help\" for a full list of commands");
         }
+    }
+
+    public function getOwningPlugin() : Plugin {
+        return $this->plugin;
     }
 }
