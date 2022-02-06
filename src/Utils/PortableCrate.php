@@ -3,12 +3,8 @@ declare(strict_types=1);
 
 namespace GrosserZak\PortableCrates\Utils;
 
-use muqsit\invmenu\InvMenu;
-use muqsit\invmenu\type\InvMenuTypeIds;
-use pocketmine\block\VanillaBlocks;
 use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
-use pocketmine\utils\TextFormat as G;
+use pocketmine\player\Player;
 
 class PortableCrate {
 
@@ -27,8 +23,8 @@ class PortableCrate {
     /** @var array */
     private array $rewards;
 
-    /** @var InvMenu|null */
-    private ?InvMenu $GUI;
+    /** @var RewardGUI */
+    private RewardGUI $GUI;
 
     public function __construct(string $name, int $index, Item $item, string $id, array $rewards) {
         $this->name = $name;
@@ -36,31 +32,7 @@ class PortableCrate {
         $this->item = $item;
         $this->id = $id;
         $this->rewards = $rewards;
-        $this->GUI = $this->initRewardGUI();
-    }
-
-    private function initRewardGUI() : ?InvMenu {
-        $rewards = $this->rewards;
-        $nRewards = count($rewards);
-        if($nRewards > 54) {
-            return null;
-        }
-        $menu = InvMenu::create(($nRewards < 27 ? InvMenuTypeIds::TYPE_CHEST : InvMenuTypeIds::TYPE_DOUBLE_CHEST));
-        $menu->setListener(InvMenu::readonly());
-        $rewardsInv = $menu->getInventory();
-        for($i=0;$i<$rewardsInv->getSize();$i++) {
-            if($i >= $rewardsInv->getSize()) break;
-            if(!isset($rewards[$i])) {
-                $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
-            } else {
-                $reward = $rewards[$i];
-                $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], (int)$reward[2])
-                    ->setCustomName(G::RESET . $reward[3])
-                    ->setLore(array_merge($reward[4], ["", G::RESET . G::GREEN . $reward[6] . "% probability"]));
-            }
-            $rewardsInv->setItem($i, $item);
-        }
-        return $menu;
+        $this->GUI = new RewardGUI($rewards);
     }
 
     public function getName() : string {
@@ -75,16 +47,17 @@ class PortableCrate {
         return $this->item;
     }
 
-    public function getId() : string{
+    public function getId() : string {
         return $this->id;
     }
 
-    public function getRewards() : array{
+    public function getRewards() : array {
         return $this->rewards;
     }
 
-    public function getRewardGUI() : ?InvMenu {
-        return $this->GUI;
+    public function sendRewardsGUI(Player $player) : void {
+        $gui = clone $this->GUI;
+        $gui->send($player);
     }
 
 }

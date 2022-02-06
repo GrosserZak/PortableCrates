@@ -5,6 +5,7 @@ namespace GrosserZak\PortableCrates;
 
 use Exception;
 use GrosserZak\PortableCrates\Utils\PortableCrate;
+use JsonException;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\nbt\LittleEndianNbtSerializer;
@@ -98,6 +99,7 @@ class PCManager {
      * @param string $name The crate name
      * @return bool
      * True if the crate has been deleted, false otherwise
+     * @throws JsonException
      */
     public function deleteCrateByName(string $name) : bool {
         $cratesCfg = $this->plugin->getCratesCfg();
@@ -207,16 +209,5 @@ class PCManager {
         } else {
             $player->getInventory()->addItem($item);
         }
-    }
-
-    /**
-     * @param Player $player
-     * @param PortableCrate $crate
-     * @return bool True if the InvMenu of the crate has been found and sent to the player, false otherwise
-     */
-    public function openCrateRewardsGUI(Player $player, PortableCrate $crate) : bool {
-        if(($gui = $crate->getRewardGUI()) === null) return false;
-        $gui->send($player);
-        return true;
     }
 }

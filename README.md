@@ -80,7 +80,6 @@ Otherwise if the function was disabled all players would receive the crate
 
 ## TODO
 - [ ] Add **amount** as optional parameter to `add` subcommand to allow giving out more stacks of items
-- [ ] Paginate crate rewards GUI
 
 **Note: Any suggestion is appreciated**
 

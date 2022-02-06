@@ -44,9 +44,7 @@ class EventListener implements Listener {
                     return;
                 }
                 if($player->isSneaking()) {
-                    if(!$pcMgr->openCrateRewardsGUI($player, $crate)) {
-                        $player->sendPopup(G::RED . "Cannot show crate rewards! Contact an administrator");
-                    }
+                    $crate->sendRewardsGUI($player);
                     $ev->cancel();
                     return;
                 }
