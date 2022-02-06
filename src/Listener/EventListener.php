@@ -29,6 +29,15 @@ class EventListener implements Listener {
             if(($crateTag = $item->getNamedTag()->getCompoundTag("PortableCrates")) !== null) {
                 $pcMgr = $this->plugin->getPCManager();
                 $crate = $pcMgr->existsCrate($crateTag->getString("Name"));
+                $crateItem = $crate->getItem();
+                if($crateTag->getString("Id") !== $crate->getId()) {
+                    $crateItem->setCount($item->getCount());
+                    $player->getInventory()->setItemInHand(VanillaBlocks::AIR()->asItem());
+                    $player->sendMessage(G::GREEN . "The version of your crate was outdated! Now it's updated, Enjoy!");
+                    $pcMgr->giveCrate($player, $crateItem);
+                    $ev->cancel();
+                    return;
+                }
                 if(empty($crate->getRewards())) {
                     $player->sendMessage(G::RED . "This crate has no rewards in it! " . ($player->hasPermission("portablecrates.command.edit") ? "Add some rewards with \"/pcrate add {$crate->getName()} <prob>\"" : " Please contact an Administrator"));
                     $ev->cancel();
@@ -43,15 +52,6 @@ class EventListener implements Listener {
                 }
                 if(time() < ($this->crateCooldown[mb_strtolower($player->getName())] ?? -1)) {
                     $player->sendMessage(G::RED . "You have to wait before opening another crate!");
-                    $ev->cancel();
-                    return;
-                }
-                $crateItem = $crate->getItem();
-                if($crateTag->getString("Id") !== $crate->getId()) {
-                    $crateItem->setCount($item->getCount());
-                    $player->getInventory()->setItemInHand(VanillaBlocks::AIR()->asItem());
-                    $player->sendMessage(G::GREEN . "The version of your crate was outdated! Now it's updated, Enjoy!");
-                    $pcMgr->giveCrate($player, $crateItem);
                     $ev->cancel();
                     return;
                 }
