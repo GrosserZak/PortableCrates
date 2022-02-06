@@ -24,14 +24,11 @@ class RewardGUI extends InvMenu {
         $this->pages = array_chunk($rewards, 45);
         parent::__construct(InvMenuHandler::getTypeRegistry()->get(InvMenuTypeIds::TYPE_DOUBLE_CHEST));
         parent::setListener(function (InvMenuTransaction $transaction) : InvMenuTransactionResult {
-            $page = $transaction->getAction()->getInventory()->getItem(49)->getNamedTag()->getCompoundTag("PortableCrates")?->getCompoundTag("RewardGUI")?->getByte("PageNumber");
+            $pageNumber = $transaction->getAction()->getInventory()->getItem(49)->getNamedTag()->getCompoundTag("PortableCrates")?->getCompoundTag("RewardGUI")?->getByte("PageNumber");
             $clickedItem = $transaction->getItemClicked();
             if(($nbt = $clickedItem->getNamedTag()->getCompoundTag("PortableCrates")?->getCompoundTag("RewardGUI")?->getTag("GoToPage")) !== null) {
                 $goTo = $nbt->getValue();
-                match(true) {
-                    $goTo === "Previous" => $this->renderItemsPage($page-1),
-                    $goTo === "Next" => $this->renderItemsPage($page+1)
-                };
+                $this->renderItemsPage(($goTo === "Previous" ? $pageNumber-1 : ($goTo === "Next" ? $pageNumber+1 : 0)));
             }
             return $transaction->discard();
         });
