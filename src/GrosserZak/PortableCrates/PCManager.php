@@ -5,13 +5,18 @@ namespace GrosserZak\PortableCrates;
 
 use Exception;
 use GrosserZak\PortableCrates\Utils\PortableCrate;
+use GrosserZak\PortableCrates\Utils\RewardGUI;
 use JsonException;
+use pocketmine\block\utils\DyeColor;
+use pocketmine\block\VanillaBlocks;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
+use pocketmine\item\VanillaItems;
 use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\player\Player;
+use pocketmine\utils\Config;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\TextFormat as G;
 
@@ -19,22 +24,74 @@ class PCManager {
 
     const PREFIX = G::DARK_GRAY . "[" . G::DARK_GREEN . "Portable" . G::GREEN . "Crates" . G::DARK_GRAY . "]";
 
-    /** @var Main */
-    private Main $plugin;
+    /** @var int Represents the max size of the inventory to display crate rewards */
+    private const MAX_SIZE = 45;
+
+    /** @var Config */
+    private Config $cratesCfg;
 
     /** @var PortableCrate[] */
     private array $crates = [];
 
-    public function __construct(Main $plugin) {
-        $this->plugin = $plugin;
+    /** @var array<string, int, list<Item>> */
+    private static array $contents = [];
+
+    public function __construct(Config $cratesCfg) {
+        $this->cratesCfg = $cratesCfg;
         $this->loadCrates();
     }
 
     public function loadCrates() : void {
         $this->crates = [];
-        foreach($this->plugin->getCratesCfg()->getAll() as $index => $data) {
+        foreach($this->cratesCfg->getAll() as $index => $data) {
             $crateItem = $this->getCrateItemByData($data);
             $this->crates[strtolower($data["name"])] = new PortableCrate($data["name"], $index, $crateItem, $data["id"], $data["rewards"]);
+            self::initRewardsGUIContents(strtolower($data["name"]), array_chunk($data["rewards"], self::MAX_SIZE));
+        }
+    }
+
+    private function initRewardsGUIContents(string $crateName, array $rewardsArr) {
+        self::$contents[$crateName] = [];
+        foreach($rewardsArr as $page => $rewards) {
+            for($i=0;$i<54;$i++) {
+                if($i>=self::MAX_SIZE) {
+                    if($i == 46 and isset($rewardsArr[($page-1)])) {
+                        $item = VanillaBlocks::WOOL()->setColor(DyeColor::RED())->asItem();
+                        $item->setNamedTag(CompoundTag::create()->setTag("PortableCrates",
+                            CompoundTag::create()->setTag("RewardGUI",
+                                CompoundTag::create()->setString("GoToPage", "Previous")
+                            )
+                        ));
+                        $item->setCustomName(G::RESET . G::RED . "Previous Page");
+                    } elseif($i == 49) {
+                        $item = VanillaItems::PAPER();
+                        $item->setNamedTag(CompoundTag::create()->setTag("PortableCrates",
+                            CompoundTag::create()->setTag("RewardGUI",
+                                CompoundTag::create()->setByte("PageNumber", $page)
+                            )
+                        ));
+                        $item->setCustomName(G::RESET . G::WHITE . "Page: " . ($page+1));
+                    } elseif($i == 52 and isset($rewardsArr[($page+1)])) {
+                        $item = VanillaBlocks::WOOL()->setColor(DyeColor::GREEN())->asItem();
+                        $item->setNamedTag(CompoundTag::create()->setTag("PortableCrates",
+                            CompoundTag::create()->setTag("RewardGUI",
+                                CompoundTag::create()->setString("GoToPage", "Next")
+                            )
+                        ));
+                        $item->setCustomName(G::RESET . G::GREEN . "Next Page");
+                    } else {
+                        $item = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::BLACK())->asItem()->setCustomName(G::RESET);
+                    }
+                } elseif(!isset($rewards[$i])) {
+                    $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
+                } else {
+                    $reward = $rewards[$i];
+                    $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], (int)$reward[2])
+                        ->setCustomName(G::RESET . $reward[3])
+                        ->setLore(array_merge($reward[4], ["", G::RESET . G::GREEN . $reward[6] . "% probability"]));
+                }
+                self::$contents[$crateName][$page][] = $item;
+            }
         }
     }
 
@@ -49,7 +106,7 @@ class PCManager {
      * An array containing the crate data if the crate exists in the config file, null otherwise
      */
     private function getCrateConfigDataByIndex(int $index) : ?array {
-        return $this->plugin->getCratesCfg()->get($index) ?? null;
+        return $this->cratesCfg->get($index) ?? null;
     }
 
     /**
@@ -70,6 +127,7 @@ class PCManager {
         $data = $this->getCrateConfigDataByIndex($crate->getConfigIndex());
         $crateItem = $this->getCrateItemByData($data);
         $this->crates[strtolower($crate->getName())] = new PortableCrate($crate->getName(), $crate->getConfigIndex(), $crateItem, $data["id"], $data["rewards"]);
+        self::initRewardsGUIContents(strtolower($crate->getName()), array_chunk($data["rewards"], self::MAX_SIZE));
     }
 
     /**
@@ -79,7 +137,7 @@ class PCManager {
      * @throws Exception
      */
     public function createNewCrate(Item $crateItem, string $crateName) : void {
-        $cratesCfg = $this->plugin->getCratesCfg();
+        $cratesCfg = $this->cratesCfg;
         $newCrateIndex = array_key_last($cratesCfg->getAll()) + 1;
         $newCrate = array(
             "name" => $crateName,
@@ -102,7 +160,7 @@ class PCManager {
      * @throws JsonException
      */
     public function deleteCrateByName(string $name) : bool {
-        $cratesCfg = $this->plugin->getCratesCfg();
+        $cratesCfg = $this->cratesCfg;
         if(!isset($this->crates[strtolower($name)])) return false;
         $crate = $this->crates[strtolower($name)];
         $cratesCfg->remove($crate->getConfigIndex());
@@ -120,7 +178,7 @@ class PCManager {
      */
     public function addRewardToCrate(PortableCrate $crate, Item $item, int $prob) : void {
         $crateIndex = $crate->getConfigIndex();
-        $cratesCfg = $this->plugin->getCratesCfg();
+        $cratesCfg = $this->cratesCfg;
         $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
         $rewards[] = [$item->getId(), $item->getMeta(), $item->getCount(), $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
         $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
@@ -139,7 +197,7 @@ class PCManager {
      */
     public function removeRewardFromCrate(PortableCrate $crate, int $rewardIndex) : string {
         $crateIndex = $crate->getConfigIndex();
-        $cratesCfg = $this->plugin->getCratesCfg();
+        $cratesCfg = $this->cratesCfg;
         $lastKey = array_key_last($crate->getRewards());
         if($rewardIndex > $lastKey) {
             return G::RED . " The reward index must be " . ($lastKey === 0 ? "1" : "between 1 and " . $crate->getName() . " Crate max reward index of " . ($lastKey + 1)) . "!";
@@ -209,5 +267,9 @@ class PCManager {
         } else {
             $player->getInventory()->addItem($item);
         }
+    }
+
+    public function sendRewardGUI(Player $player, string $crateName) {
+        (new RewardGUI(self::$contents[$crateName]))->send($player);
     }
 }

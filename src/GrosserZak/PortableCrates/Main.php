@@ -11,9 +11,6 @@ use pocketmine\utils\Config;
 
 class Main extends PluginBase {
 
-    /** @var Config */
-    private Config $crates;
-
     /** @var PCManager */
     private PCManager $pcManager;
 
@@ -23,14 +20,10 @@ class Main extends PluginBase {
         }
         $this->saveDefaultConfig();
         $this->saveResource("crates.yml");
-        $this->crates = new Config($this->getDataFolder() . "crates.yml");
+        $cratesCfg = new Config($this->getDataFolder() . "crates.yml");
         $this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
-        $this->getServer()->getCommandMap()->register($this->getName(), new CrateCommand($this, $this->crates));
-        $this->pcManager = new PCManager($this);
-    }
-
-    public function getCratesCfg() : Config {
-        return $this->crates;
+        $this->getServer()->getCommandMap()->register($this->getName(), new CrateCommand($this, $cratesCfg));
+        $this->pcManager = new PCManager($cratesCfg);
     }
 
     public function getPCManager() : PCManager {

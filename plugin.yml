@@ -1,7 +1,6 @@
 name: PortableCrates
-src-namespace-prefix: GrosserZak\PortableCrates
 main: GrosserZak\PortableCrates\Main
-version: 2.1.0
+version: 2.1.1
 api: 4.0.0
 author: GrosserZak
 description: Plugin that give carriable crates

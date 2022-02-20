@@ -44,7 +44,7 @@ class EventListener implements Listener {
                     return;
                 }
                 if($player->isSneaking()) {
-                    $crate->sendRewardsGUI($player);
+                    $pcMgr->sendRewardGUI($player, mb_strtolower($crate->getName()));
                     $ev->cancel();
                     return;
                 }
