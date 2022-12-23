@@ -16,17 +16,12 @@ use pocketmine\utils\TextFormat as G;
 
 class CrateCommand extends Command implements PluginOwned {
 
-    /** @var Main */
-    private Main $plugin;
-
-    /** @var Config */
-    private Config $crates;
-
-    public function __construct(Main $plugin, Config $crates) {
+    public function __construct(
+        private Main $plugin,
+        private Config $crates
+    ) {
         parent::__construct("portablecrate", "Portable crate command", "/portablecrate help", ["pcrate"]);
         $this->setPermission("portablecrates.command.give;portablecrates.command.edit");
-        $this->plugin = $plugin;
-        $this->crates = $crates;
     }
 
     /**
@@ -57,7 +52,8 @@ class CrateCommand extends Command implements PluginOwned {
                 $message .= G::GREEN . "info <name>" . G::GRAY . ": View the information's about a crate" . G::EOL;
                 $message .= G::GREEN . "create <name>" . G::GRAY . ": Creates a crate " . G::RED . "(Must hold an item)" . G::EOL;
                 $message .= G::GREEN . "delete <name>" . G::GRAY . ": Deletes a crate" . G::EOL;
-                $message .= G::GREEN . "add <name> <prob>" . G::GRAY . ": Adds a reward to a crate " . G::RED . "(Must hold an item)" . G::EOL;
+                $message .= G::GREEN . "add <name> <prob> [amount]" . G::GRAY . ": Adds a reward to a crate. " . G::RED . "(Must hold an item)" . G::EOL .
+                    G::GOLD . "[NOTICE]" . G::GRAY . " If you dont specify the amount, it will be counted the amount of the item you're holding" . G::EOL;
                 $message .= G::GREEN . "remove <name> <index>" . G::GRAY . ": Removes a reward from a crate by index " . G::EOL
                     . G::RED . "(\"/portablecrate <name> info\" for all reward indexes )" . G::EOL;
                 $message .= G::GREEN . "give <name> all|<player> [count]" . G::GRAY . ": Give a player or all the online players a crate" . G::EOL;
@@ -127,7 +123,7 @@ class CrateCommand extends Command implements PluginOwned {
                     return;
                 }
                 if(!isset($args[1])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate add <name> <prob>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate add <name> <prob> [amount]");
                     return;
                 }
                 if(($crate = $pcMgr->existsCrate($args[1])) === null) {
@@ -135,17 +131,26 @@ class CrateCommand extends Command implements PluginOwned {
                     return;
                 }
                 if(!isset($args[2])) {
-                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate add $args[1] <prob>");
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate add $args[1] <prob> [amount]");
                     return;
                 }
                 if(!is_numeric($args[2]) or ($args[2] <= 0 or $args[2] > 100)) {
                     $sender->sendMessage($pfx . G::RED . " Probability must be a numeric value between 0 and 100 included!");
                     return;
                 }
-                /** @var Player $sender */
                 $item = $sender->getInventory()->getItemInHand();
-                $pcMgr->addRewardToCrate($crate, $item, (int)$args[2]);
-                $sender->sendMessage($pfx . G::GREEN . " You've added x" . $item->getCount() . " " . $item->getName() . G::RESET . G::GREEN . ", with " . $args[2] . "% chance, to " . $crate->getName() . " Crate");
+                if(isset($args[3])) {
+                    if(!is_numeric($args[3]) or $args[3] <= 0) {
+                        $sender->sendMessage($pfx . G::RED . " Amount must be a numeric number greater than 0!");
+                        return;
+                    }
+                    $count = (int)$args[3];
+                } else {
+                    $count = $item->getCount();
+                }
+                /** @var Player $sender */
+                $pcMgr->addRewardToCrate($crate, $item, (int)$args[2], $count);
+                $sender->sendMessage($pfx . G::GREEN . " You've added x" . $count . " " . $item->getName() . G::RESET . G::GREEN . ", with " . $args[2] . "% chance, to " . $crate->getName() . " Crate");
                 break;
             case "remove":
                 if(!$sender->hasPermission("portablecrates.command.edit")) {
@@ -195,7 +200,7 @@ class CrateCommand extends Command implements PluginOwned {
                 $crateItem->setCount($count);
                 $giveOnWorld = $this->plugin->getConfig()->get("giveOnWorld");
                 if($args[2] !== "all") {
-                    $player = $this->plugin->getServer()->getPlayerByPrefix($args[2]);
+                    $player = $this->plugin->getServer()->getPlayerExact($args[2]);
                     if(!$player instanceof Player) {
                         $sender->sendMessage($pfx . G::RED . " This player isn't online!");
                         return;
@@ -234,7 +239,7 @@ class CrateCommand extends Command implements PluginOwned {
                     return;
                 }
                 $cfg = $this->plugin->getConfig();
-                $value = !((bool)$cfg->get("giveOnWorld"));
+                $value = !($cfg->get("giveOnWorld"));
                 $cfg->set("giveOnWorld", $value);
                 $sender->sendMessage($pfx . G::GRAY . " On world give crates has been toggled " . ($value ? G::GREEN . "ON" : G::RED . "OFF"));
                 $cfg->save();

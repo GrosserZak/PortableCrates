@@ -27,17 +27,15 @@ class PCManager {
     /** @var int Represents the max size of the inventory to display crate rewards */
     private const MAX_SIZE = 45;
 
-    /** @var Config */
-    private Config $cratesCfg;
-
     /** @var PortableCrate[] */
     private array $crates = [];
 
     /** @var array<string, int, list<Item>> */
     private static array $contents = [];
 
-    public function __construct(Config $cratesCfg) {
-        $this->cratesCfg = $cratesCfg;
+    public function __construct(
+        private Config $cratesCfg
+    ) {
         $this->loadCrates();
     }
 
@@ -50,7 +48,7 @@ class PCManager {
         }
     }
 
-    private function initRewardsGUIContents(string $crateName, array $rewardsArr) {
+    private function initRewardsGUIContents(string $crateName, array $rewardsArr) : void {
         self::$contents[$crateName] = [];
         foreach($rewardsArr as $page => $rewards) {
             for($i=0;$i<54;$i++) {
@@ -86,8 +84,9 @@ class PCManager {
                     $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
                 } else {
                     $reward = $rewards[$i];
-                    $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], (int)$reward[2])
-                        ->setCustomName(G::RESET . $reward[3])
+                    $count = (int)$reward[2];
+                    $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], ($count <= 64 ? $count : 1))
+                        ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[3])
                         ->setLore(array_merge($reward[4], ["", G::RESET . G::GREEN . $reward[6] . "% probability"]));
                 }
                 self::$contents[$crateName][$page][] = $item;
@@ -176,11 +175,11 @@ class PCManager {
      * @param int $prob The probability of the reward to be found in the crate
      * @throws Exception
      */
-    public function addRewardToCrate(PortableCrate $crate, Item $item, int $prob) : void {
+    public function addRewardToCrate(PortableCrate $crate, Item $item, int $prob, int $count) : void {
         $crateIndex = $crate->getConfigIndex();
         $cratesCfg = $this->cratesCfg;
         $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
-        $rewards[] = [$item->getId(), $item->getMeta(), $item->getCount(), $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
+        $rewards[] = [$item->getId(), $item->getMeta(), $count, $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
         $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
@@ -257,19 +256,21 @@ class PCManager {
      */
     public function giveCrateReward(array $reward, Player $player) : void {
         $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
-        $tag = (new LittleEndianNbtSerializer())->read(base64_decode($reward[5], false))->mustGetCompoundTag();
+        $tag = (new LittleEndianNbtSerializer())->read(base64_decode($reward[5]))->mustGetCompoundTag();
         $item->setNamedTag($tag);
         $item->setCustomName($reward[3]);
         $item->setLore($reward[4]);
         if(!$player->getInventory()->canAddItem($item)) {
-            $player->getWorld()->dropItem($player->getPosition()->asVector3(), $item);
-            $player->sendMessage(TextFormat::RED . "Your inventory is full! " .  $item->getCustomName() . TextFormat::RESET . TextFormat::RED . " dropped on the ground.");
+            $itemEntity = $player->getWorld()->dropItem($player->getPosition()->asVector3(), $item);
+            $itemEntity->setOwner($player->getName());
+            $player->sendMessage(TextFormat::RED . "Your inventory is full! " .  $item->getCustomName() . TextFormat::RESET . TextFormat::RED . " dropped on the ground." . G::EOL .
+                G::GRAY . "(You have 1 minute to pick it up before other players can collect it!)");
         } else {
             $player->getInventory()->addItem($item);
         }
     }
 
-    public function sendRewardGUI(Player $player, string $crateName) {
+    public function sendRewardGUI(Player $player, string $crateName) : void {
         (new RewardGUI(self::$contents[$crateName]))->send($player);
     }
 }
