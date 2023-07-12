@@ -8,18 +8,18 @@ use pocketmine\item\Item;
 class PortableCrate {
 
     public function __construct(
-        private string $name,
-        private int $index,
-        private Item $item,
-        private string $id,
-        private array $rewards
+        private readonly string $name,
+        private readonly string $index,
+        private readonly Item   $item,
+        private readonly string $id,
+        private readonly array $rewards
     ) {}
 
     public function getName() : string {
         return $this->name;
     }
 
-    public function getConfigIndex() : int {
+    public function getConfigIndex() : string {
         return $this->index;
     }
 

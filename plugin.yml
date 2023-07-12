@@ -1,7 +1,7 @@
 name: PortableCrates
 main: GrosserZak\PortableCrates\Main
-version: 2.2.0
-api: 4.0.0
+version: 2.3.0
+api: 5.0.0
 author: GrosserZak
 description: Plugin that give carriable crates
 permissions:

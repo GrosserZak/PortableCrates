@@ -1,12 +1,12 @@
 ---
 - name: "uncommon"
   id: a156b056
-  item: [54, 0 ,1]
+  item: "chest"
   customname: "§r§a§lUncommon §fCrate§r"
   lore: ["",
          "§r§fJust an §aUncommon §fCrate"]
   rewards: [
-    [57, 0, 16, "Diamond Block", [ ], "CgAAAA==", 35],
-    [57, 0, 32, "Diamond Block", [ ], "CgAAAA==", 15]
+    ["diamond_block", 16, "Diamond Block", [ ], "CgAAAA==", 35],
+    ["diamond_block", 32, "Diamond Block", [ ], "CgAAAA==", 15]
   ]
 ...

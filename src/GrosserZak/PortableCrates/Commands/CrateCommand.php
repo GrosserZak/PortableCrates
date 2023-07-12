@@ -17,8 +17,8 @@ use pocketmine\utils\TextFormat as G;
 class CrateCommand extends Command implements PluginOwned {
 
     public function __construct(
-        private Main $plugin,
-        private Config $crates
+        private readonly Main $plugin,
+        private readonly Config $crates
     ) {
         parent::__construct("portablecrate", "Portable crate command", "/portablecrate help", ["pcrate"]);
         $this->setPermission("portablecrates.command.give;portablecrates.command.edit");
@@ -53,7 +53,7 @@ class CrateCommand extends Command implements PluginOwned {
                 $message .= G::GREEN . "create <name>" . G::GRAY . ": Creates a crate " . G::RED . "(Must hold an item)" . G::EOL;
                 $message .= G::GREEN . "delete <name>" . G::GRAY . ": Deletes a crate" . G::EOL;
                 $message .= G::GREEN . "add <name> <prob> [amount]" . G::GRAY . ": Adds a reward to a crate. " . G::RED . "(Must hold an item)" . G::EOL .
-                    G::GOLD . "[NOTICE]" . G::GRAY . " If you dont specify the amount, it will be counted the amount of the item you're holding" . G::EOL;
+                    G::GOLD . "[NOTICE]" . G::GRAY . " If you don't specify the amount, it will be counted the amount of the item you're holding" . G::EOL;
                 $message .= G::GREEN . "remove <name> <index>" . G::GRAY . ": Removes a reward from a crate by index " . G::EOL
                     . G::RED . "(\"/portablecrate <name> info\" for all reward indexes )" . G::EOL;
                 $message .= G::GREEN . "give <name> all|<player> [count]" . G::GRAY . ": Give a player or all the online players a crate" . G::EOL;

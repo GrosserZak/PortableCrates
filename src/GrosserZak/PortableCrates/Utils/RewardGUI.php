@@ -9,7 +9,6 @@ use muqsit\invmenu\transaction\InvMenuTransaction;
 use muqsit\invmenu\transaction\InvMenuTransactionResult;
 use muqsit\invmenu\type\InvMenuTypeIds;
 use pocketmine\item\Item;
-use pocketmine\player\Player;
 
 class RewardGUI extends InvMenu {
 

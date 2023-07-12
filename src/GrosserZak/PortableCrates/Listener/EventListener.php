@@ -15,15 +15,12 @@ use pocketmine\utils\TextFormat as G;
 
 class EventListener implements Listener {
 
-    /** @var Main */
-    private Main $plugin;
-
     /** @var array */
     private array $crateCooldown = [];
 
-    public function __construct(Main $plugin) {
-        $this->plugin = $plugin;
-    }
+    public function __construct(
+        private readonly Main $plugin
+    ) { }
 
     public function onInteract(PlayerInteractEvent $ev) {
         $player = $ev->getPlayer();

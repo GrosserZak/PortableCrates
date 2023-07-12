@@ -34,7 +34,7 @@ Now we can get rid of this item and start adding our rewards to our crate.
 
 ### Adding Rewards
 
-To add rewards to our crate we're going to use the `/pcrate add` command.\
+To add rewards to our crate we're going to use the `/pcrate add` command.
 
 For example: \
 Lets add 8 EnderPearls with 75% drop rate chance. We'll need to hold 8 EnderPearls and type the following command:
@@ -42,7 +42,7 @@ Lets add 8 EnderPearls with 75% drop rate chance. We'll need to hold 8 EnderPear
 And there we go! \
 We've added 8 EnderPearls with 75% drop rate chance
 
-<img src="/images/img2.jpg" alt="x8 EnderPearls added with 75% drop rate chance to Rare Crate"/> \
+<img src="/images/img2.jpg" alt="x8 EnderPearls added with 75% drop rate chance to Rare Crate"/>
 
 We can check its index with the command `/pcrate info <crateName>` in my case `/pcrate info rare` \
 <img src="/images/img3.jpg" alt="Rare Crate infos"/>

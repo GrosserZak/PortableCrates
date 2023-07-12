@@ -10,7 +10,7 @@ use JsonException;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
+use pocketmine\item\StringToItemParser;
 use pocketmine\item\VanillaItems;
 use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\tag\CompoundTag;
@@ -34,7 +34,7 @@ class PCManager {
     private static array $contents = [];
 
     public function __construct(
-        private Config $cratesCfg
+        private readonly Config $cratesCfg
     ) {
         $this->loadCrates();
     }
@@ -43,7 +43,7 @@ class PCManager {
         $this->crates = [];
         foreach($this->cratesCfg->getAll() as $index => $data) {
             $crateItem = $this->getCrateItemByData($data);
-            $this->crates[strtolower($data["name"])] = new PortableCrate($data["name"], $index, $crateItem, $data["id"], $data["rewards"]);
+            $this->crates[strtolower($data["name"])] = new PortableCrate($data["name"], (string)$index, $crateItem, $data["id"], $data["rewards"]);
             self::initRewardsGUIContents(strtolower($data["name"]), array_chunk($data["rewards"], self::MAX_SIZE));
         }
     }
@@ -84,10 +84,11 @@ class PCManager {
                     $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
                 } else {
                     $reward = $rewards[$i];
-                    $count = (int)$reward[2];
-                    $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], ($count <= 64 ? $count : 1))
-                        ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[3])
-                        ->setLore(array_merge($reward[4], ["", G::RESET . G::GREEN . $reward[6] . "% probability"]));
+                    $count = (int)$reward[1];
+                    $item = StringToItemParser::getInstance()->parse($reward[0])
+                        ->setCount($count <= 64 ? $count : 1)
+                        ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[2])
+                        ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
                 }
                 self::$contents[$crateName][$page][] = $item;
             }
@@ -100,11 +101,11 @@ class PCManager {
 
     /**
      * This function returns the config data of a crate given its config index
-     * @param int $index The config index of the crate
+     * @param string $index The config index of the crate
      * @return array|null
      * An array containing the crate data if the crate exists in the config file, null otherwise
      */
-    private function getCrateConfigDataByIndex(int $index) : ?array {
+    private function getCrateConfigDataByIndex(string $index) : ?array {
         return $this->cratesCfg->get($index) ?? null;
     }
 
@@ -141,7 +142,7 @@ class PCManager {
         $newCrate = array(
             "name" => $crateName,
             "id" => substr(sha1(random_bytes(8)), 0, 8),
-            "item" => [$crateItem->getId(), $crateItem->getMeta()],
+            "item" => StringToItemParser::getInstance()->lookupAliases($crateItem)[0],
             "customname" => $crateItem->getName(),
             "lore" => $crateItem->getLore(),
             "rewards" => []
@@ -179,7 +180,7 @@ class PCManager {
         $crateIndex = $crate->getConfigIndex();
         $cratesCfg = $this->cratesCfg;
         $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
-        $rewards[] = [$item->getId(), $item->getMeta(), $count, $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
+        $rewards[] = [StringToItemParser::getInstance()->lookupAliases($item)[0], $count, $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
         $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
@@ -220,7 +221,7 @@ class PCManager {
      * @return Item The result item
      */
     private function getCrateItemByData(array $data) : Item {
-        $crateItem = ItemFactory::getInstance()->get($data["item"][0], $data["item"][1]);
+        $crateItem = StringToItemParser::getInstance()->parse($data[0]);
         $crateItem->setNamedTag(CompoundTag::create()
             ->setTag("PortableCrates", CompoundTag::create()
                 ->setString("Name", $data["name"])
@@ -234,7 +235,7 @@ class PCManager {
 
     /**
      * This function is used to give a player a crate
-     * @param Player $player The player who's gonna receive the crate
+     * @param Player $player The player who's going to receive the crate
      * @param Item $crateItem The crate item to be given
      */
     public function giveCrate(Player $player, Item $crateItem) : void {
@@ -252,14 +253,14 @@ class PCManager {
     /**
      * This function gives a crate reward (used onInteractEvent when a player opens a crate)
      * @param array $reward The reward data
-     * @param Player $player The player who's gonna receive the reward
+     * @param Player $player The player who's going to receive the reward
      */
     public function giveCrateReward(array $reward, Player $player) : void {
-        $item = ItemFactory::getInstance()->get((int)$reward[0], (int)$reward[1], (int)$reward[2]);
-        $tag = (new LittleEndianNbtSerializer())->read(base64_decode($reward[5]))->mustGetCompoundTag();
+        $item = StringToItemParser::getInstance()->parse($reward[0])->setCount($reward[1]);
+        $tag = (new LittleEndianNbtSerializer())->read(base64_decode($reward[4]))->mustGetCompoundTag();
         $item->setNamedTag($tag);
-        $item->setCustomName($reward[3]);
-        $item->setLore($reward[4]);
+        $item->setCustomName($reward[2]);
+        $item->setLore($reward[3]);
         if(!$player->getInventory()->canAddItem($item)) {
             $itemEntity = $player->getWorld()->dropItem($player->getPosition()->asVector3(), $item);
             $itemEntity->setOwner($player->getName());
