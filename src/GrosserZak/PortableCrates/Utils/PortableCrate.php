@@ -23,7 +23,7 @@ class PortableCrate {
         return $this->index;
     }
 
-    public function getItem() : Item{
+    public function getItem() : Item {
         return $this->item;
     }
 

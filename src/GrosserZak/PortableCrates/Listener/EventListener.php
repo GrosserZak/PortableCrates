@@ -22,7 +22,7 @@ class EventListener implements Listener {
         private readonly Main $plugin
     ) { }
 
-    public function onInteract(PlayerInteractEvent $ev) {
+    public function onInteract(PlayerInteractEvent $ev) : void {
         $player = $ev->getPlayer();
         $item = $player->getInventory()->getItemInHand();
         if($item->hasNamedTag()) {
@@ -59,12 +59,12 @@ class EventListener implements Listener {
                 $message = G::GRAY . $player->getName() . " has opened " . $crateItem->getCustomName() . G::RESET . G::GRAY . " and received:" . G::EOL;
                 $randomizer = new WeightedRandom();
                 foreach($crate->getRewards() as $reward) {
-                    $perc = $reward[6] / 100;
+                    $perc = $reward[5] / 100;
                     $randomizer->add($reward, $perc);
                 }
                 $randomizer->setup();
                 $reward = $randomizer->generate(1)->current();
-                $message .= G::GRAY . " x" . $reward[2] . " " . $reward[3] . G::EOL;
+                $message .= G::GRAY . " x" . $reward[1] . " " . $reward[2] . G::EOL;
                 $pcMgr->giveCrateReward($reward, $player);
                 $this->plugin->getServer()->broadcastMessage($message);
                 $ev->cancel();
@@ -72,7 +72,7 @@ class EventListener implements Listener {
         }
     }
 
-    public function onItemCollect(EntityItemPickupEvent $ev) {
+    public function onItemCollect(EntityItemPickupEvent $ev) : void {
         $player = $ev->getEntity();
         $itemEntity = $ev->getOrigin();
         if($itemEntity instanceof ItemEntity and $player instanceof Player) {

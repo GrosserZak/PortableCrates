@@ -33,7 +33,7 @@ class RewardGUI extends InvMenu {
         self::renderItemsPage();
     }
 
-    private function renderItemsPage(int $pageNumber = 0) {
+    private function renderItemsPage(int $pageNumber = 0) : void {
         $this->getInventory()->setContents(self::$contents[$pageNumber]);
     }
 
