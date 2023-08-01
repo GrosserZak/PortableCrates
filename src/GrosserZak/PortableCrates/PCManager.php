@@ -147,7 +147,7 @@ class PCManager {
             "lore" => $crateItem->getLore(),
             "rewards" => []
         );
-        $cratesCfg->set($newCrateIndex, $newCrate);
+        $cratesCfg->set((string)$newCrateIndex, $newCrate);
         $cratesCfg->save();
         $this->loadCrates();
     }
