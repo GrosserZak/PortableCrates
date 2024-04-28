@@ -85,10 +85,12 @@ class PCManager {
                 } else {
                     $reward = $rewards[$i];
                     $count = (int)$reward[1];
-                    $item = StringToItemParser::getInstance()->parse($reward[0])
-                        ->setCount($count <= 64 ? $count : 1)
-                        ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[2])
-                        ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
+                    $item = StringToItemParser::getInstance()->parse($reward[0]);
+
+        if ($item !== null) {
+            $item->setCount($count <= 64 ? $count : 1)
+             ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[2])
+             ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
                 }
                 self::$contents[$crateName][$page][] = $item;
             }
