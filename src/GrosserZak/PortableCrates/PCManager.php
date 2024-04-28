@@ -88,7 +88,7 @@ class PCManager {
                     $item = StringToItemParser::getInstance()->parse($reward[0]);
 
         if ($item !== null) {
-            $item->setCount($count <= 64 ? $count : 1);
+            $item->setCount($count <= 64 ? $count : 1)
              ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[2]);
              ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
                 }
