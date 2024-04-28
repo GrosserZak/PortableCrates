@@ -62,33 +62,35 @@ class PCManager {
                         ));
                         $item->setCustomName(G::RESET . G::RED . "Previous Page");
                     } elseif($i == 49) {
-                        $item = VanillaItems::PAPER();
-                        $item->setNamedTag(CompoundTag::create()->setTag("PortableCrates",
-                            CompoundTag::create()->setTag("RewardGUI",
-                                CompoundTag::create()->setByte("PageNumber", $page)
-                            )
-                        ));
-                        $item->setCustomName(G::RESET . G::WHITE . "Page: " . ($page+1));
-                    } elseif($i == 52 and isset($rewardsArr[($page+1)])) {
-                        $item = VanillaBlocks::WOOL()->setColor(DyeColor::GREEN())->asItem();
-                        $item->setNamedTag(CompoundTag::create()->setTag("PortableCrates",
-                            CompoundTag::create()->setTag("RewardGUI",
-                                CompoundTag::create()->setString("GoToPage", "Next")
-                            )
-                        ));
-                        $item->setCustomName(G::RESET . G::GREEN . "Next Page");
-                    } else {
-                        $item = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::BLACK())->asItem()->setCustomName(G::RESET);
-                    }
-                } elseif(!isset($rewards[$i])) {
-                    $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
-                } else {
-                    $reward = $rewards[$i];
-                    $count = (int)$reward[1];
-                    $item = StringToItemParser::getInstance()->parse($reward[0])
-                        ->setCount($count <= 64 ? $count : 1)
-                        ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[2])
-                        ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
+                        VanillaItems::PAPER();
+    $item->setNamedTag(CompoundTag::create()->setTag("PortableCrates",
+        CompoundTag::create()->setTag("RewardGUI",
+            CompoundTag::create()->setByte("PageNumber", $page)
+        )
+    ));
+    $item->setCustomName(G::RESET . G::WHITE . "Page: " . ($page+1));
+} elseif($i == 52 and isset($rewardsArr[($page+1)])) {
+    $item = VanillaBlocks::WOOL()->setColor(DyeColor::GREEN())->asItem();
+    $item->setNamedTag(CompoundTag::create()->setTag("PortableCrates",
+        CompoundTag::create()->setTag("RewardGUI",
+            CompoundTag::create()->setString("GoToPage", "Next")
+        )
+    ));
+    $item->setCustomName(G::RESET . G::GREEN . "Next Page");
+} else {
+    $item = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::BLACK())->asItem()->setCustomName(G::RESET);
+}
+} elseif(!isset($rewards[$i])) {
+    $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
+} else {
+    $reward = $rewards[$i];
+    $count = (int)$reward[1];
+    $parsedItem = StringToItemParser::getInstance()->parse($reward[0]);
+
+    if ($parsedItem !== null) {
+        $item = $parsedItem->setCount($count <= 64 ? $count : 1)
+                           ->setCustomName(G::RESET . G::WHITE . "x" . $count . " " . $reward[2])
+                           ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
                 }
                 self::$contents[$crateName][$page][] = $item;
             }
