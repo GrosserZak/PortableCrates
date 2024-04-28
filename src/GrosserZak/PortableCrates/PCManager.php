@@ -93,9 +93,11 @@ class PCManager {
              ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
                 }
                 self::$contents[$crateName][$page][] = $item;
+                }
             }
         }
     }
+}
 
     public function getCrates() : array {
         return $this->crates;
@@ -276,4 +278,3 @@ class PCManager {
     public function sendRewardGUI(Player $player, string $crateName) : void {
         (new RewardGUI(self::$contents[$crateName]))->send($player);
     }
-}
