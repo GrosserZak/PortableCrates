@@ -80,7 +80,7 @@ class PCManager {
                     } else {
                         $item = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::BLACK())->asItem()->setCustomName(G::RESET);
                     }
-                } elseif(!isset($rewards[$i])) {
+                } else (!isset($rewards[$i])) {
                     $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
             } else {
                 $reward = $rewards[$i];
