@@ -276,6 +276,5 @@ class PCManager {
 
     public function sendRewardGUI(Player $player, string $crateName) : void {
         (new RewardGUI(self::$contents[$crateName]))->send($player);
-        }
     }
 }
