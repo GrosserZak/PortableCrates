@@ -30,7 +30,7 @@ class EventListener implements Listener {
                 $pcMgr = $this->plugin->getPCManager();
                 $crate = $pcMgr->existsCrate($crateTag->getString("Name"));
                 $crateItem = $crate->getItem();
-                if($crateTag->getString("Id") !== $crate->getId()) {
+                if($crateTag->getString("Id") !== $crate->getId() and $crate->canBeUpdated()) {
                     $crateItem->setCount($item->getCount());
                     $player->getInventory()->setItemInHand(VanillaBlocks::AIR()->asItem());
                     $player->sendMessage(G::GREEN . "The version of your crate was outdated! Now it's updated, Enjoy!");
@@ -38,7 +38,7 @@ class EventListener implements Listener {
                     $ev->cancel();
                     return;
                 }
-                if(empty($crate->getRewards())) {
+                if(empty($crate->getCurrentRewards())) {
                     $player->sendMessage(G::RED . "This crate has no rewards in it! " . ($player->hasPermission("portablecrates.command.edit") ? "Add some rewards with \"/pcrate add {$crate->getName()} <prob>\"" : " Please contact an Administrator"));
                     $ev->cancel();
                     return;
@@ -58,7 +58,7 @@ class EventListener implements Listener {
                 $this->crateCooldown[mb_strtolower($player->getName())] = time() + 3;
                 $message = G::GRAY . $player->getName() . " has opened " . $crateItem->getCustomName() . G::RESET . G::GRAY . " and received:" . G::EOL;
                 $randomizer = new WeightedRandom();
-                foreach($crate->getRewards() as $reward) {
+                foreach($crate->getCurrentRewards() as $reward) {
                     $perc = $reward[5] / 100;
                     $randomizer->add($reward, $perc);
                 }
