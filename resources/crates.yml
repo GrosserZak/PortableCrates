@@ -1,12 +1,39 @@
 ---
-- name: "uncommon"
-  id: a156b056
-  item: "chest"
-  customname: "§r§a§lUncommon §fCrate§r"
-  lore: ["",
-         "§r§fJust an §aUncommon §fCrate"]
-  rewards: [
-    ["diamond_block", 16, "Diamond Block", [ ], "CgAAAA==", 35],
-    ["diamond_block", 32, "Diamond Block", [ ], "CgAAAA==", 15]
-  ]
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!       NOTICE THE FOLLOWING OLD CONFIGURATION WILL BE DEPRECATED IN VERSION 3.0         !!!
+# !!!   MAKE SURE TO USE THE VERSION 2.4 OR HIGHER TO UPDATE YOUR CRATES CONFIGURATIONS      !!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# OLD CRATES FILE CONFIGURATION
+#
+#- name: "uncommon"
+#  id: a156b056
+#  item: "chest"
+#  customname: "§r§a§lUncommon §fCrate§r"
+#  lore: ["",
+#         "§r§fJust an §aUncommon §fCrate"]
+#  rewards: [
+#    ["diamond_block", 16, "Diamond Block", [ ], "CgAAAA==", 35],
+#    ["diamond_block", 32, "Diamond Block", [ ], "CgAAAA==", 15]
+#  ]
+#
+# NEW CRATES FILE CONFIGURATION
+#
+- name: rare
+  id: 9b859672
+  canBeUpdated: true
+  item: chest
+  customname: §r§6§lRare §fCrate§r
+  lore:
+    - §r
+    - '§r§fContains §6Rare §fitems '
+  currentRewards:
+    - - diamond
+      - 1
+      - §r§b§lDiamond§r
+      - - §r
+        - '§r§fA very special §bDiamond '
+      - CgAACgcAZGlzcGxheQgEAE5hbWUTAMKncsKnYsKnbERpYW1vbmTCp3IJBABMb3JlCAIAAAADAMKnciAAwqdywqdmQSB2ZXJ5IHNwZWNpYWwgwqdiRGlhbW9uZCAAAA==
+      - 50
+  newRewards: [ ]
 ...

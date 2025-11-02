@@ -43,9 +43,33 @@ class PCManager {
         $this->crates = [];
         foreach($this->cratesCfg->getAll() as $index => $data) {
             $crateItem = $this->getCrateItemByData($data);
-            $this->crates[strtolower($data["name"])] = new PortableCrate($data["name"], (string)$index, $crateItem, $data["id"], $data["rewards"]);
-            self::initRewardsGUIContents(strtolower($data["name"]), array_chunk($data["rewards"], self::MAX_SIZE));
+            /** Config Update will be removed in version 3.0. Be sure to use this version (2.4) to update the config files */
+            if(isset($data["canBeUpdated"])) {
+                $canBeUpdated = $data["canBeUpdated"];
+            } else {
+                $canBeUpdated = false;
+                $this->cratesCfg->setNested($index . ".canBeUpdated", false);
+            }
+            if(isset($data["currentRewards"])) {
+                $currentRewards = $data["currentRewards"];
+            } else {
+                $currentRewards = [];
+                if(isset($data["rewards"])) {
+                    $currentRewards = $data["rewards"];
+                    $this->cratesCfg->removeNested($index . ".rewards");
+                }
+                $this->cratesCfg->setNested($index . ".currentRewards", $currentRewards);
+            }
+            if(!isset($data["newRewards"])) {
+                $this->cratesCfg->setNested($index . ".newRewards", []);
+            } else {
+                $newRewards = $data["newRewards"];
+            }
+            $this->crates[strtolower($data["name"])] = new PortableCrate($data["name"], (string)$index, $canBeUpdated, $crateItem, $data["id"], $currentRewards, ($canBeUpdated ? [] : ($newRewards ?? [])));
+            self::initRewardsGUIContents(strtolower($data["name"]), array_chunk($currentRewards, self::MAX_SIZE));
         }
+        $this->cratesCfg->save();
+        $this->cratesCfg->reload();
     }
 
     private function initRewardsGUIContents(string $crateName, array $rewardsArr) : void {
@@ -126,8 +150,9 @@ class PCManager {
     private function updateCrate(PortableCrate $crate) : void {
         $data = $this->getCrateConfigDataByIndex($crate->getConfigIndex());
         $crateItem = $this->getCrateItemByData($data);
-        $this->crates[strtolower($crate->getName())] = new PortableCrate($crate->getName(), $crate->getConfigIndex(), $crateItem, $data["id"], $data["rewards"]);
-        self::initRewardsGUIContents(strtolower($crate->getName()), array_chunk($data["rewards"], self::MAX_SIZE));
+        $canBeUpdated = $data["canBeUpdated"];
+        $this->crates[strtolower($crate->getName())] = new PortableCrate($crate->getName(), $crate->getConfigIndex(), $canBeUpdated, $crateItem, $data["id"], $data["currentRewards"], ($canBeUpdated ? [] : $data["newRewards"]));
+        self::initRewardsGUIContents(strtolower($crate->getName()), array_chunk($data["currentRewards"], self::MAX_SIZE));
     }
 
     /**
@@ -142,10 +167,12 @@ class PCManager {
         $newCrate = array(
             "name" => $crateName,
             "id" => substr(sha1(random_bytes(8)), 0, 8),
+            "canBeUpdated" => false,
             "item" => StringToItemParser::getInstance()->lookupAliases($crateItem)[0],
             "customname" => $crateItem->getName(),
             "lore" => $crateItem->getLore(),
-            "rewards" => []
+            "currentRewards" => [],
+            "newRewards" => []
         );
         $cratesCfg->set((string)$newCrateIndex, $newCrate);
         $cratesCfg->save();
@@ -179,9 +206,23 @@ class PCManager {
     public function addRewardToCrate(PortableCrate $crate, Item $item, int $prob, int $count) : void {
         $crateIndex = $crate->getConfigIndex();
         $cratesCfg = $this->cratesCfg;
-        $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
+        if($cratesCfg->exists($crateIndex . ".rewards")) {
+            $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
+            $cratesCfg->remove($crateIndex . ".rewards");
+        }
+        if($crate->canBeUpdated()) {
+            $nestPath = ".currentRewards";
+            if (!isset($rewards)) {
+                $rewards = $cratesCfg->getNested($crateIndex . $nestPath);
+            }
+        } else {
+            $nestPath = ".newRewards";
+            if(!isset($rewards)) {
+                $rewards = $cratesCfg->getNested($crateIndex . $nestPath);
+            }
+        }
         $rewards[] = [StringToItemParser::getInstance()->lookupAliases($item)[0], $count, $item->getName(), $item->getLore(), base64_encode((new LittleEndianNbtSerializer())->write(new TreeRoot($item->getNamedTag(), ""))), $prob];
-        $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
+        $cratesCfg->setNested($crateIndex . $nestPath, $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
         $this->updateCrate($crate);
@@ -198,20 +239,58 @@ class PCManager {
     public function removeRewardFromCrate(PortableCrate $crate, int $rewardIndex) : string {
         $crateIndex = $crate->getConfigIndex();
         $cratesCfg = $this->cratesCfg;
-        $lastKey = array_key_last($crate->getRewards());
+        $lastKey = array_key_last(($crate->canBeUpdated() ? $crate->getCurrentRewards() : $crate->getNewRewards()));
         if($rewardIndex > $lastKey) {
             return G::RED . " The reward index must be " . ($lastKey === 0 ? "1" : "between 1 and " . $crate->getName() . " Crate max reward index of " . ($lastKey + 1)) . "!";
         }
-        $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
+        if($cratesCfg->exists($crateIndex . ".rewards")) {
+            $rewards = $cratesCfg->getNested($crateIndex . ".rewards");
+            $cratesCfg->remove($crateIndex . ".rewards");
+        }
+        if($crate->canBeUpdated()) {
+            $nestPath = ".currentRewards";
+            if (!isset($rewards)) {
+                $rewards = $cratesCfg->getNested($crateIndex . $nestPath);
+            }
+        } else {
+            $nestPath = ".newRewards";
+            if(!isset($rewards)) {
+                $rewards = $cratesCfg->getNested($crateIndex . $nestPath);
+            }
+        }
         if(count($rewards) === 0) {
             return G::RED . " There's no rewards to be removed from this crate!";
         }
         $removedReward = array_splice($rewards, $rewardIndex, 1)[0];
-        $cratesCfg->setNested($crateIndex . ".rewards", $rewards);
+        $cratesCfg->setNested($crateIndex . $nestPath, $rewards);
         $cratesCfg->setNested($crateIndex . ".id", substr(sha1(random_bytes(8)), 0, 8));
         $cratesCfg->save();
         $this->updateCrate($crate);
-        return G::GREEN . " You've removed the reward with index " . ($rewardIndex+1) . ": x" . $removedReward[2] . " " . $removedReward[3] . G::RESET . G::GREEN . " with " . $removedReward[6] . "% probability from " . $crate->getName() . " Crate";
+        return G::GREEN . " You've removed the reward with index " . ($rewardIndex+1) . ": x" . $removedReward[1] . " " . $removedReward[2] . G::RESET . G::GREEN . " with " . $removedReward[5] . "% probability from " . $crate->getName() . " Crate";
+    }
+
+    public function lockUpdates(PortableCrate $crate) : void {
+        $cratesCfg = $this->cratesCfg;
+        $cratesCfg->setNested($crate->getConfigIndex() . ".canBeUpdated", false);
+        $cratesCfg->setNested($crate->getConfigIndex() . ".newRewards", $crate->getCurrentRewards());
+        $cratesCfg->save();
+        $this->updateCrate($crate);
+    }
+
+    public function publishUpdates(PortableCrate $crate) : void {
+        $cratesCfg = $this->cratesCfg;
+        $cratesCfg->setNested($crate->getConfigIndex() . ".canBeUpdated", true);
+        $cratesCfg->setNested($crate->getConfigIndex() . ".currentRewards", $crate->getNewRewards());
+        $cratesCfg->setNested($crate->getConfigIndex() . ".newRewards", []);
+        $cratesCfg->save();
+        $this->updateCrate($crate);
+    }
+
+    public function rollbackUpdates(PortableCrate $crate) : void {
+        $cratesCfg = $this->cratesCfg;
+        $cratesCfg->setNested($crate->getConfigIndex() . ".newRewards", $crate->getCurrentRewards());
+        $cratesCfg->save();
+        $this->updateCrate($crate);
     }
 
     /**

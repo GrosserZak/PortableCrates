@@ -56,6 +56,9 @@ class CrateCommand extends Command implements PluginOwned {
                     G::GOLD . "[NOTICE]" . G::GRAY . " If you don't specify the amount, it will be counted the amount of the item you're holding" . G::EOL;
                 $message .= G::GREEN . "remove <name> <index>" . G::GRAY . ": Removes a reward from a crate by index " . G::EOL
                     . G::RED . "(\"/portablecrate <name> info\" for all reward indexes )" . G::EOL;
+                $message .= G::GREEN . "unpublish <name>" . G::GRAY . ": Locks the crate from being updated for players. You can edit the crate without being noticed." . G::EOL;
+                $message .= G::GREEN . "publish <name>" . G::GRAY . ": Publish the updated version of the crate. All players can update their crates." . G::EOL;
+                $message .= G::GREEN . "rollback <name>" . G::GRAY . ": Reverts all the edits performed, while the crate was locked, to its current version. You can begin with your edits or proceed with publishing it as it was originally" . G::EOL;
                 $message .= G::GREEN . "give <name> all|<player> [count]" . G::GRAY . ": Give a player or all the online players a crate" . G::EOL;
                 $message .= G::GREEN . "toggle" . G::GRAY . ": Toggles on world give crates" . G::EOL;
                 $message .= G::GREEN . "reload" . G::GRAY . ": Reload all config files";
@@ -78,9 +81,31 @@ class CrateCommand extends Command implements PluginOwned {
                     return;
                 }
                 $message = G::GRAY . str_repeat("-", 7) . $pfx . G::GRAY . str_repeat("-", 7) . G::EOL;
+                $message .= G::WHITE . "The updates of this crate are currently " . ($crate->canBeUpdated() ? G::GREEN . "PUBLISHED" : G::RED . "UNPUBLISHED") . G::EOL;
                 $message .= $crate->getItem()->getCustomName() . G::RESET . G::GRAY . " Rewards:" . G::EOL;
-                foreach($crate->getRewards() as $index => $reward) {
-                    $message .= G::BOLD . G::WHITE . ($index+1) . ". " . G::RESET . G::GRAY . "x" . $reward[2] . " " . $reward[3] . G::RESET . G::DARK_GRAY . " [" . G::GREEN . $reward[6] . "%" . G::DARK_GRAY . "]" . G::EOL;
+                if (!$crate->canBeUpdated()) {
+                    $message .= G::WHITE . "Published version (What players can see currently):" . G::EOL;
+                    foreach($crate->getCurrentRewards() as $index => $reward) {
+                        $message = $this->buildRewardMessage($index, $reward, $message);
+                    }
+                    $message .= G::WHITE . "New version (Currently being edited):" . G::EOL;
+                    $newCurrentRewardsTemp = $crate->getNewRewards();
+                    foreach($crate->getCurrentRewards() as $reward) {
+                        if(in_array($reward, $newCurrentRewardsTemp)) {
+                            $locatedIndex = array_search($reward, $newCurrentRewardsTemp);
+                            $message = $this->buildRewardMessage(null, $reward, $message, G::GRAY . G::BOLD . "UNMODIFIED");
+                            array_splice($newCurrentRewardsTemp, $locatedIndex, 1);
+                        } else {
+                            $message = $this->buildRewardMessage(null, $reward, $message, G::RED . G::BOLD . "REMOVED");
+                        }
+                    }
+                    foreach($newCurrentRewardsTemp as $reward) {
+                        $message = $this->buildRewardMessage(null, $reward, $message, G::GREEN . G::BOLD . "ADDED");
+                    }
+                } else {
+                    foreach($crate->getCurrentRewards() as $index => $reward) {
+                        $message = $this->buildRewardMessage($index, $reward, $message);
+                    }
                 }
                 $sender->sendMessage($message);
                 break;
@@ -151,6 +176,10 @@ class CrateCommand extends Command implements PluginOwned {
                 /** @var Player $sender */
                 $pcMgr->addRewardToCrate($crate, $item, (int)$args[2], $count);
                 $sender->sendMessage($pfx . G::GREEN . " You've added x" . $count . " " . $item->getName() . G::RESET . G::GREEN . ", with " . $args[2] . "% chance, to " . $crate->getName() . " Crate");
+                if(!$crate->canBeUpdated()) {
+                    $sender->sendMessage($pfx . G::RED . " NOTE: Remember to publish the new version once you've finished editing the crate with the command " . G::GOLD . "/portablecrate publish " . $crate->getName() . G::EOL
+                    . G::RED . "You can view the current and the newest version using " . G::GOLD . "/portablecrate info " . $crate->getName());
+                }
                 break;
             case "remove":
                 if(!$sender->hasPermission("portablecrates.command.edit")) {
@@ -177,6 +206,73 @@ class CrateCommand extends Command implements PluginOwned {
                 }
                 $rewardIndex = (int)$args[2] - 1;
                 $sender->sendMessage($pfx . $pcMgr->removeRewardFromCrate($crate, $rewardIndex));
+                if(!$crate->canBeUpdated()) {
+                    $sender->sendMessage($pfx . G::RED . " NOTE: Remember to publish the new version once you've finished editing the crate with the command " . G::GOLD . "/portablecrate publish " . $crate->getName() . G::EOL
+                        . G::RED . "You can view the current and the newest version using " . G::GOLD . "/portablecrate info " . $crate->getName());
+                }
+                break;
+            case "unpublish":
+            case "lock":
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
+                    $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
+                    return;
+                }
+                if(!isset($args[1])) {
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate unpublish|lock <name>");
+                    return;
+                }
+                if(($crate = $pcMgr->existsCrate($args[1])) === null) {
+                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
+                    return;
+                }
+                if(!$crate->canBeUpdated()) {
+                    $sender->sendMessage($pfx . G::GREEN . " The updates on the crate " . $crate->getItem()->getName() . G::RESET . G::GREEN . " are already locked!");
+                } else {
+                    $pcMgr->lockUpdates($crate);
+                    $sender->sendMessage($pfx . G::GREEN . " The updates of the crate " . $crate->getItem()->getName() . G::RESET . G::GREEN . " have been locked!" . G::EOL . "Now you can edit the crate without players noticing");
+                }
+                break;
+            case "publish":
+            case "unlock":
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
+                    $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
+                    return;
+                }
+                if(!isset($args[1])) {
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate publish|unlock <name>");
+                    return;
+                }
+                if(($crate = $pcMgr->existsCrate($args[1])) === null) {
+                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
+                    return;
+                }
+                if($crate->canBeUpdated()) {
+                    $sender->sendMessage($pfx . G::GREEN . " The updated version of the crate " . $crate->getItem()->getName() . G::RESET . G::GREEN . " is already published!");
+                } else {
+                    $pcMgr->publishUpdates($crate);
+                    $sender->sendMessage($pfx . G::GREEN . " The updates of the crate " . $crate->getItem()->getName() . G::RESET . G::GREEN . " have been published!" . G::EOL . "Now players can update their crates.");
+                }
+                break;
+            case "rollback":
+            case "revert":
+                if(!$sender->hasPermission("portablecrates.command.edit")) {
+                    $sender->sendMessage($pfx . G::RED . " Insufficient Permissions");
+                    return;
+                }
+                if(!isset($args[1])) {
+                    $sender->sendMessage($pfx . G::RED . " Usage: /portablecrate rollback|revert <name>");
+                    return;
+                }
+                if(($crate = $pcMgr->existsCrate($args[1])) === null) {
+                    $sender->sendMessage($pfx . G::RED . " Couldn't find crate with name " . $args[1] . "! Run \"/portablecrate list\" to view all the crates");
+                    return;
+                }
+                if($crate->canBeUpdated()) {
+                    $sender->sendMessage($pfx . G::RED . " Cannot rollback the " . $crate->getItem()->getName() . G::RESET . G::RED . " since its not being edited in lock mode!");
+                } else {
+                    $pcMgr->rollbackUpdates($crate);
+                    $sender->sendMessage($pfx . G::GREEN . " The new version of the crate " . $crate->getItem()->getName() . G::RESET . G::GREEN . " has been reverted to its current version!" . G::EOL . "You can now either publish the crate as it was or proceed with new edits.");
+                }
                 break;
             case "give":
                 if(!$sender->hasPermission("portablecrates.command.give")) {
@@ -260,5 +356,10 @@ class CrateCommand extends Command implements PluginOwned {
 
     public function getOwningPlugin() : Plugin {
         return $this->plugin;
+    }
+
+    public function buildRewardMessage(?int $index, mixed $reward, string $message, string $changeStatus = "") : string {
+        $message .= (!is_null($index) ? G::BOLD . G::WHITE . ($index + 1) . ". " . G::RESET : G::RESET) . G::GRAY . "x" . $reward[1] . " " . $reward[2] . G::RESET . G::DARK_GRAY . " [" . G::GREEN . $reward[5] . "%" . G::DARK_GRAY . "]" . (empty($changeStatus) ? "" : G::DARK_GRAY . " | " . $changeStatus) . G::EOL;
+        return $message;
     }
 }
