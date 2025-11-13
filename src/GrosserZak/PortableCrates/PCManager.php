@@ -73,9 +73,9 @@ class PCManager {
     }
 
     private function initRewardsGUIContents(string $crateName, array $rewardsArr) : void {
-        self::$contents[$crateName] = [];
-        foreach($rewardsArr as $page => $rewards) {
-            for($i=0;$i<54;$i++) {
+    self::$contents[$crateName] = [];
+    foreach($rewardsArr as $page => $rewards) {
+        for($i=0;$i<54;$i++) {
                 if($i>=self::MAX_SIZE) {
                     if($i == 46 and isset($rewardsArr[($page-1)])) {
                         $item = VanillaBlocks::WOOL()->setColor(DyeColor::RED())->asItem();
@@ -104,20 +104,23 @@ class PCManager {
                     } else {
                         $item = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::BLACK())->asItem()->setCustomName(G::RESET);
                     }
-                } elseif(!isset($rewards[$i])) {
-                    $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
                 } else {
-                    $reward = $rewards[$i];
-                    $count = (int)$reward[1];
-                    $item = StringToItemParser::getInstance()->parse($reward[0])
-                        ->setCount($count <= 64 ? $count : 1)
-                        ->setCustomName(G::RESET . G::WHITE . "x" . $count . " ". $reward[2])
-                        ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
+                    $item = VanillaBlocks::BARRIER()->asItem()->setCustomName(G::RESET);
+            } else {
+                $reward = $rewards[$i];
+                $count = (int)$reward[1];
+                $item = StringToItemParser::getInstance()->parse($reward[0]);
+
+                if ($item !== null) {
+                    $item->setCount($count <= 64 ? $count : 1)
+                    ->setCustomName(G::RESET . G::WHITE . "x" . $count . " " . $reward[2])
+                    ->setLore(array_merge($reward[3], ["", G::RESET . G::GREEN . $reward[5] . "% probability"]));
+                    self::$contents[$crateName][$page][] = $item;
                 }
-                self::$contents[$crateName][$page][] = $item;
             }
-        }
+        } // This is the missing closing bracket
     }
+}
 
     public function getCrates() : array {
         return $this->crates;
